@@ -2,9 +2,14 @@
 
 启动后访问 `/docs` 可试用普通接口。流式任务使用 POST，前端通过 fetch 读取 SSE。
 
+开启密码保护时，先使用网页 `/login` 提交 `username` 和 `password` 表单；后续请求携带服务返回的 `border_session` Cookie。页面访问未登录时跳转到登录页，业务接口返回 JSON 401，不再使用 HTTP Basic 弹窗。会话最长8小时、退出时撤销、进程重启后失效。浏览器写请求还会校验 Origin，拒绝来自其他站点的提交。
+
 | 方法 | 路径 | 用途 |
 |---|---|---|
 | GET | `/api/health` | 查看实际运行模式与配置的组件 |
+| GET / POST | `/login` | 网页表单登录，成功后设置8小时 HttpOnly 会话 Cookie |
+| POST | `/logout` | 撤销当前登录会话并返回登录页 |
+| GET | `/api/auth/me` | 当前登录模式与用户名 |
 | GET | `/api/dashboard` | 商品目录和订单列表 |
 | POST | `/api/chat/stream` | 创建一轮协作，返回 SSE |
 | GET | `/api/proposals/{session_id}` | 当前会话的最近30个确认单 |

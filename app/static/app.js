@@ -43,6 +43,10 @@ const statuses = { paid: "待配送", in_transit: "运输中", delivered: "已�
 
 async function api(url, options) {
   const response = await fetch(url, options);
+  if (response.status === 401) {
+    window.location.assign("/login");
+    throw new Error("登录已过期，请重新登录。");
+  }
   if (!response.ok) {
     const detail = await response.json().catch(() => ({}));
     throw new Error(
@@ -413,6 +417,9 @@ $("#new-session").addEventListener("click", () => {
   showStatus("新会话已创建，商品和市场记忆已重置。");
 });
 $("#refresh").addEventListener("click", refresh);
+$("#logout-form").addEventListener("submit", () => {
+  sessionStorage.removeItem("border-session");
+});
 (async () => {
   try {
     const health = await (await api("/api/health")).json();
@@ -426,6 +433,8 @@ $("#refresh").addEventListener("click", refresh);
       );
       $(".utility-edition").textContent = "FREE DEMO — TEMPORARY DATA";
     }
+    const user = await (await api("/api/auth/me")).json();
+    $("#logout-form").hidden = !user.login_required;
     await Promise.all([refresh(), loadProposals()]);
   } catch (error) {
     $("#connection").textContent = "连接失败";

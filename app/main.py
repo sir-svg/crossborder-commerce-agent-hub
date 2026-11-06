@@ -2,17 +2,25 @@ import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
+from html import escape
 from pathlib import Path
+from typing import Annotated
 from uuid import uuid4
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, Response, StreamingResponse
+from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    RedirectResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 
-from app.access import DemoAccess
+from app.access import COOKIE_NAME, SESSION_SECONDS, DemoAccess, DemoAuth
 from app.config import Settings
 from app.external import A2AGateway, create_external
 from app.knowledge import Knowledge
@@ -73,13 +81,74 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await memory.close()
             knowledge.close()
 
+    auth = DemoAuth(settings.demo_username, password)
     app = FastAPI(title="跨境电商混合智能中台", version="0.1.0", lifespan=lifespan)
-    app.add_middleware(DemoAccess, username=settings.demo_username, password=password)
+    app.state.auth = auth
+    app.add_middleware(DemoAccess, auth=auth)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+    def login_page(username: str, error: str = "", status: int = 200):
+        template = (STATIC / "login.html").read_text(encoding="utf-8")
+        template = template.replace("{{username}}", escape(username, quote=True))
+        template = template.replace("{{error}}", escape(error))
+        return HTMLResponse(template, status_code=status, headers={"Cache-Control": "no-store"})
+
+    @app.get("/login", include_in_schema=False)
+    async def login_form(request: Request):
+        if not auth.enabled or auth.valid(request.cookies.get(COOKIE_NAME, "")):
+            return RedirectResponse("/", status_code=303)
+        return login_page(settings.demo_username)
+
+    @app.post("/login", include_in_schema=False)
+    async def login(
+        request: Request,
+        username: Annotated[str, Form()] = "",
+        password: Annotated[str, Form()] = "",
+    ):
+        if not auth.enabled:
+            return RedirectResponse("/", status_code=303)
+        if not username or not password:
+            return login_page(username[:80], "请输入用户名和访问密码。", 400)
+        if len(username) > 80 or len(password) > 1024 or not auth.authenticate(username, password):
+            return login_page(username[:80], "用户名或密码不正确，请检查后重试。", 401)
+        # 每次登录换一个会话，避免沿用旧令牌；密码不会进入 Cookie。
+        auth.revoke(request.cookies.get(COOKIE_NAME, ""))
+        response = RedirectResponse("/", status_code=303, headers={"Cache-Control": "no-store"})
+        response.set_cookie(
+            COOKIE_NAME,
+            auth.issue(),
+            max_age=SESSION_SECONDS,
+            httponly=True,
+            secure=settings.public_demo or request.url.scheme == "https",
+            samesite="lax",
+            path="/",
+        )
+        return response
+
+    @app.post("/logout", include_in_schema=False)
+    async def logout(request: Request):
+        auth.revoke(request.cookies.get(COOKIE_NAME, ""))
+        response = RedirectResponse(
+            "/login" if auth.enabled else "/",
+            status_code=303,
+            headers={"Cache-Control": "no-store"},
+        )
+        response.delete_cookie(
+            COOKIE_NAME,
+            path="/",
+            httponly=True,
+            secure=settings.public_demo or request.url.scheme == "https",
+            samesite="lax",
+        )
+        return response
+
+    @app.get("/api/auth/me", include_in_schema=False)
+    async def current_user():
+        return {"login_required": auth.enabled, "username": settings.demo_username}
 
     @app.get("/", include_in_schema=False)
     async def index():
-        return FileResponse(STATIC / "index.html")
+        return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-store"})
 
     @app.get("/api/health")
     async def health():

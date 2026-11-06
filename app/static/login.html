@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f1efe7" />
+    <title>登录 · BORDER 跨境作业台</title>
+    <link rel="stylesheet" href="/static/login.css" />
+    <script src="/static/login.js" defer></script>
+  </head>
+  <body>
+    <header class="login-header">
+      <a class="brand" href="/login" aria-label="BORDER 登录首页">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+          <path d="M8 29 28 9H12m16 0v16M8 13v16h16" />
+        </svg>
+        <span>BORDER<sup>®</sup><small>跨境作业台</small></span>
+      </a>
+      <span class="header-label"
+        ><span class="header-label-en">COMMERCE OPERATIONS</span><b>/</b
+        ><span>账号登录</span></span
+      >
+    </header>
+    <main class="login-layout">
+      <section class="login-poster" aria-label="跨境协作工作空间">
+        <div class="poster-top">
+          <span><i></i> ONE CONNECTED WORKSPACE</span><span>001 / ACCESS</span>
+        </div>
+        <h1>让每一环，<br />接向<span>世界。</span></h1>
+        <p>
+          从商品到履约，从一次指令到完整协作。<br />你的跨境运营，从这里开始。
+        </p>
+        <svg class="poster-route" viewBox="0 0 540 225" aria-hidden="true">
+          <path
+            class="guide"
+            d="M0 187H540M0 60H540M90 0V225M270 0V225M450 0V225"
+          />
+          <path class="route" d="M45 181H142V127H285V66H432L494 21" />
+          <path class="route ghost" d="M45 181H228V181H385V121H506" />
+          <circle cx="45" cy="181" r="6" />
+          <circle cx="142" cy="127" r="4" />
+          <circle cx="285" cy="66" r="4" />
+          <circle cx="494" cy="21" r="6" />
+          <path class="arrow" d="m473 20 22 0-1 22" />
+          <text x="25" y="211">起点 / REQUEST</text>
+          <text x="424" y="57">下一程 / DELIVERY</text>
+        </svg>
+        <div class="poster-bottom">
+          <span>01 商品</span><span>02 订单</span><span>03 客服</span
+          ><span>04 营销</span>
+        </div>
+      </section>
+      <section class="login-section" aria-labelledby="login-title">
+        <div class="login-form-wrap">
+          <div class="eyebrow"><i></i> WORKSPACE SIGN IN</div>
+          <h2 id="login-title">欢迎回来。</h2>
+          <p class="intro">登录，进入你的跨境作业台。</p>
+          <form action="/login" method="post" id="login-form">
+            <label for="username">用户名<span>USERNAME</span></label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              value="{{username}}"
+              autocomplete="username"
+              maxlength="80"
+              required
+              autofocus
+            />
+            <label for="password">访问密码<span>PASSWORD</span></label>
+            <div class="password-field">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                maxlength="1024"
+                placeholder="请输入访问密码"
+                required
+              /><button
+                type="button"
+                id="toggle-password"
+                aria-controls="password"
+                aria-pressed="false"
+              >
+                显示
+              </button>
+            </div>
+            <p id="login-error" class="login-error" role="alert">{{error}}</p>
+            <button class="submit" id="login-submit" type="submit">
+              登录工作台<span aria-hidden="true">↗</span>
+            </button>
+          </form>
+          <div class="login-help">
+            <span>＋</span>
+            <p>
+              登录最长有效 8 小时。<br />首次访问？请向演示负责人获取登录信息。
+            </p>
+          </div>
+          <div class="demo-note">
+            <span>DEMO</span>这是演示工作空间，仅使用模拟商品和订单。
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <span>BORDER / 把每一环，接向世界。</span><span>LOCAL TO GLOBAL.</span>
+    </footer>
+  </body>
+</html>

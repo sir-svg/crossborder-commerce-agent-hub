@@ -80,6 +80,24 @@ textarea {
   font-size: 9px;
   color: #a4ac9c;
 }
+.utility-account {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.utility-account form {
+  margin: 0;
+}
+.utility-account button {
+  background: transparent;
+  color: #d6d9cc;
+  border: 0;
+  padding: 0;
+  font-size: 10px;
+}
+.utility-account button:hover {
+  color: #ff9e70;
+}
 .masthead {
   min-height: 107px;
   display: flex;
