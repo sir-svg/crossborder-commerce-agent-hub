@@ -419,6 +419,13 @@ $("#refresh").addEventListener("click", refresh);
     $("#connection").textContent = "本地服务已连接";
     if (health.model === "configured")
       $("#mode-label").textContent = "模型辅助模式 · 演示业务数据";
+    if (health.temporary_data) {
+      $(".environment-note").replaceChildren(
+        create("span", "demo-tag", "在线演示"),
+        document.createTextNode("休眠或重启后数据重置 · 仅演示数据"),
+      );
+      $(".utility-edition").textContent = "FREE DEMO — TEMPORARY DATA";
+    }
     await Promise.all([refresh(), loadProposals()]);
   } catch (error) {
     $("#connection").textContent = "连接失败";

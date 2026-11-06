@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+# 仅创建一个免费服务。无付费磁盘、数据库或外部模型调用。
+services:
+  - type: web
+    name: border-commerce-demo
+    runtime: python
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: uv sync --frozen --no-dev
+    startCommand: .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /api/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: PUBLIC_DEMO
+        value: "true"
+      - key: DEMO_USERNAME
+        value: demo
+      - key: DEMO_PASSWORD
+        generateValue: true
+      - key: DEMO_TEMPORARY_DATA
+        value: "true"
+      - key: DATABASE_PATH
+        value: /tmp/border-demo/commerce.db
+      - key: MEMORY_BACKEND
+        value: sqlite
+      - key: KNOWLEDGE_BACKEND
+        value: local
+      - key: SUPPLIER_URL
+        value: ""
+      - key: LOGISTICS_URL
+        value: ""
+      - key: MCP_URL
+        value: ""
+      - key: LLM_BASE_URL
+        value: ""
+      - key: LLM_MODEL
+        value: ""

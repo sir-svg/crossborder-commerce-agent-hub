@@ -17,6 +17,8 @@ def client(tmp_path):
         mcp_url="",
         llm_base_url="",
         llm_model="",
+        public_demo=False,
+        demo_password="",
     )
     with TestClient(create_app(settings)) as client:
         yield client

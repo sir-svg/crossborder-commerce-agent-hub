@@ -1,3 +1,4 @@
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,3 +17,7 @@ class Settings(BaseSettings):
     llm_base_url: str = ""
     llm_api_key: str = ""
     llm_model: str = ""
+    public_demo: bool = False
+    demo_username: str = "demo"
+    demo_password: SecretStr = SecretStr("")
+    demo_temporary_data: bool = False

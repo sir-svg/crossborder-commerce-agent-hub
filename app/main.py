@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 
+from app.access import DemoAccess
 from app.config import Settings
 from app.external import A2AGateway, create_external
 from app.knowledge import Knowledge
@@ -40,6 +41,11 @@ def sse(event: str, data: dict) -> str:
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
+    password = settings.demo_password.get_secret_value()
+    if settings.public_demo and len(password) < 12:
+        raise ValueError("在线演示必须设置至少12位的 DEMO_PASSWORD")
+    if password and not settings.demo_username.strip():
+        raise ValueError("DEMO_USERNAME 不能为空")
 
     @asynccontextmanager
     async def lifespan(app):
@@ -68,6 +74,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             knowledge.close()
 
     app = FastAPI(title="跨境电商混合智能中台", version="0.1.0", lifespan=lifespan)
+    app.add_middleware(DemoAccess, username=settings.demo_username, password=password)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     @app.get("/", include_in_schema=False)
@@ -79,6 +86,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {
             "status": "ok",
             "business_data": "synthetic-demo",
+            "temporary_data": settings.demo_temporary_data,
             "model": "configured" if Model(settings).enabled else "rule-demo",
             "memory": settings.memory_backend,
             "knowledge": settings.knowledge_backend,
