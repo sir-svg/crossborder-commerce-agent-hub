@@ -1,2 +1,160 @@
-# crossborder-commerce-agent-hub
-跨境电商多智能体协作中台：内部通过 LangGraph 编排商品、订单、客服与营销 Agent，外部通过 A2A 协同供应商与物流 Agent，使用 MCP 统一接入业务工具，支持共享状态、记忆管理与 SSE 实时响应。
+# BORDER · 跨境电商混合智能中台
+
+把商品、订单、客服、营销放进同一个协作网络：内部用 **LangGraph** 共享任务状态，外部用 **A2A** 委派供应商和物流任务，业务接口统一封装为 **FastMCP** 工具，页面通过 **SSE** 展示处理过程。
+
+这是一个可本地运行的学习与面试演示项目。提供 6 个商品、4 个订单、评论、营销素材和售后政策。**所有业务数据均为合成数据，没有接入真实店铺，不会付款、下采购单或向真实物流发货。**
+
+![BORDER 跨境智能协作台](docs/preview.png)
+
+## 先把项目跑起来
+
+需要 Python 3.11～3.13 和 [uv](https://docs.astral.sh/uv/getting-started/installation/)。推荐 Python 3.13。首次安装依赖需要联网，之后默认演示模式不需要模型密钥或 Docker。
+
+```powershell
+git clone https://github.com/sir-svg/crossborder-commerce-agent-hub.git
+cd crossborder-commerce-agent-hub
+uv sync --frozen
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+打开 **http://127.0.0.1:8000** 使用操作台；**http://127.0.0.1:8000/docs** 查看接口说明。
+
+Windows 也可以进入项目文件夹，右键 `start.ps1` 选择“使用 PowerShell 运行”，或运行 `powershell -ExecutionPolicy Bypass -File .\start.ps1`。如果没有 uv，先执行 `python -m pip install uv`。
+
+如果暂时不想用 Git，点击仓库页面的 **Code → Download ZIP**，解压后在项目文件夹执行上面的 `uv sync` 和启动命令。
+
+## 四条演示主线
+
+| 输入示例 | 可以看到什么 |
+|---|---|
+| 查询 SKU-1001 的库存，并补货50件 | 商品助手查询目录，通过 A2A 委派供应商，再调用 MCP 库存工具，生成补货确认单 |
+| 查看订单 CB-2026002，安排配送 | 订单助手读取订单，通过物流 A2A Agent 估算运费和时效，生成配送确认单 |
+| SKU-1001 的退货政策是什么？看看评论 | 客服助手检索政策和商品评论，返回来源编号 |
+| 为 SKU-1002 生成德国市场的营销文案 | 营销助手读取素材，生成中文、英文和德文草稿，不自动发布 |
+
+再输入“再写一份营销文案”，可复用当前会话中的商品与市场。点击“新建会话”开始独立记忆；会话标识保存在浏览器的 sessionStorage 中。
+
+补货和配送必须点击 **确认执行演示操作** 才会改变本地数据。重复确认同一张单不会重复补货或重复扣库存；确认时也会重新检查库存和订单状态。配送确认后出现的是 `DEMO-` 开头的模拟运单。
+
+## 架构与边界
+
+```mermaid
+flowchart TD
+    UI[浏览器操作台] -->|POST + SSE| API[FastAPI]
+    API --> O[LangGraph Orchestrator]
+    O --> P[商品 Agent]
+    O --> R[订单 Agent]
+    O --> C[客服 Agent]
+    O --> M[营销 Agent]
+    P & R & C & M <--> S[本轮共享 State]
+    O <--> MEM[跨轮 Memory: SQLite / Redis]
+    P -->|A2A JSON-RPC| SUP[供应商 Agent]
+    R -->|A2A JSON-RPC| LOG[物流 Agent]
+    P & R & C & M & SUP & LOG --> TOOLS[FastMCP 标准工具]
+    TOOLS --> DB[(SQLite 商品与订单)]
+    TOOLS --> KB[(本地向量检索 / Milvus)]
+    API --> APPROVAL[人工确认单 + 事务执行]
+```
+
+- **内部紧耦合**：四类节点共享 `entities/results/proposals`，调度器决定执行顺序。订单先执行，把商品和目的地传给客服、商品或营销节点。
+- **外部松耦合**：供应商和物流通过 Agent Card 发现能力，使用官方 A2A SDK 的 Task、Artifact 和 JSON-RPC 交互。默认用 ASGI transport 在进程内跑完整协议；配置地址后切换成独立 HTTP 服务。
+- **统一工具**：5 个真实注册的 FastMCP 工具：`search_products`、`get_order`、`search_knowledge`、`supplier_inventory`、`shipping_quote`。默认 Client 使用进程内传输，也支持 Streamable HTTP。
+- **记忆**：本轮状态由 LangGraph 共享；跨轮商品、订单和市场保存到 SQLite 或 Redis。这里没有实现 LangGraph checkpoint 的中断恢复。
+- **流式输出**：每完成一个实际节点才发送 `step`，最终发送 `result` 和 `done`；没有用定时动画伪装协作。
+
+### 默认演示与模型辅助模式
+
+默认使用关键词路由和固定文案模板，**不是自主推理的大模型系统**。这样没有密钥也能复现内部编排、A2A 与 MCP 调用、状态传递和人工确认。
+
+如需模型辅助，把 `.env.example` 复制为 `.env`，配置支持 Chat Completions 格式的服务：
+
+```dotenv
+LLM_BASE_URL=https://your-provider.example/v1
+LLM_API_KEY=在这里填写自己的密钥
+LLM_MODEL=服务商提供的模型名称
+```
+
+配置后模型参与路由和最终结果撰写；商品价格、库存、订单仍来自工具。模型只返回经过校验的内部助手名单，不能跳过确认接口；模型服务失败时回退到演示规则。调用模型会把本轮问题和查询结果发送给所配置的服务商。文案、检索来源和事实数据仍可在 SSE 结果的 `facts` 字段中核对。
+
+## 切换独立 A2A 与 MCP 服务
+
+在四个终端分别运行（先运行三个外部服务，再启动主应用）：
+
+```powershell
+uv run python -m app.services mcp
+uv run python -m app.services supplier
+uv run python -m app.services logistics
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+在启动前把 `.env` 设置为：
+
+```dotenv
+MCP_URL=http://localhost:8003/mcp
+SUPPLIER_URL=http://localhost:8001
+LOGISTICS_URL=http://localhost:8002
+```
+
+两个外部服务的 Agent Card 分别在 `http://localhost:8001/.well-known/agent-card.json` 和 `http://localhost:8002/.well-known/agent-card.json`。默认单进程服务也公开 `/agents/supplier/` 和 `/agents/logistics/` 的 JSON-RPC 入口及其 `.well-known/agent-card.json`。
+
+协议固定为 **A2A 0.3**，使用 `a2a-sdk<0.4`。这是明确的版本选择；不宣称支持 A2A 1.0 全部行为。当前只使用非流式 `message/send` 完成短任务，Task Store 为进程内存，重启后不保留外部任务；面向页面的 SSE 由主应用提供。
+
+## Redis 与 Milvus
+
+默认 SQLite 持久化会话实体，本地哈希向量检索政策与素材。若要体验 Redis 和 Milvus，安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/) 后运行：
+
+```powershell
+docker compose --profile infra up -d redis etcd minio milvus
+uv sync --frozen --extra milvus
+```
+
+在 `.env` 中设置：
+
+```dotenv
+MEMORY_BACKEND=redis
+REDIS_URL=redis://localhost:6379/0
+KNOWLEDGE_BACKEND=milvus
+MILVUS_URI=http://localhost:19530
+```
+
+再启动主程序。Redis 会话有效期为7天；Milvus 启动时自动创建演示 collection 并按固定文档 ID 幂等写入。**向量采用256维词/字双元组哈希，不是语义 embedding 模型**；后续可替换 `app/knowledge.py` 的 `embed()`，更换向量维度时需新建 collection。资料规模很小，当前 Milvus 查询后会按商品归属筛选；生产数据应改为服务端过滤和正式的 embedding 方案。选择 Redis 或 Milvus 后连接失败会直接报错，不悄悄回退成本地模式。
+
+只用容器运行基础演示：`docker compose up --build app`。它默认采用 SQLite、本地检索和进程内协议调用，不依赖 infra 服务。
+
+## 主要文件
+
+```text
+app/
+  main.py           HTTP 接口、SSE 和服务生命周期
+  workflow.py       LangGraph 路由与四类助手
+  external.py       供应商/物流 A2A 服务和委派客户端
+  tools.py          FastMCP 工具与客户端
+  store.py          演示数据、确认单、事务与幂等处理
+  memory.py         SQLite / Redis 会话实体
+  knowledge.py      本地 / Milvus 检索
+  llm.py            可选模型适配器
+  seed.json         商品、订单、政策、评论与素材
+  static/           无需前端构建的操作页面
+tests/              业务与协议测试
+docs/               架构、接口和演示讲解
+```
+
+## 检查代码
+
+```powershell
+uv sync --frozen --extra dev
+uv run pytest -q
+uv run ruff check app tests
+uv run ruff format --check app tests
+```
+
+更多接口示例见 [接口说明](docs/api.md)，面试讲解顺序见 [演示讲解](docs/demo-guide.md)。
+已运行的检查与尚未验证的可选组件见 [验证记录](docs/validation.md)。
+
+## 当前范围与后续方向
+
+这一版可演示协议协作和业务闭环，但尚未接入 Amazon、Shopify 等真实平台，也未实现支付、退税、真实报关与履约。运费、时效、评价均为模拟值，不能用作交易或合规依据。
+
+当前是本机单用户演示，没有登录、角色权限和真实租户隔离；会话 ID 不能代替身份认证。服务默认绑定 `127.0.0.1`，请勿直接暴露到公网。跨进程执行使用同一个 SQLite 文件，完整生产方案还需要数据库升级、分布式任务锁、服务认证、可观测性和外部写入幂等。
+
+后续接入真实系统时，在 MCP 适配层替换模拟数据，在 A2A 边界增加服务认证，把人工确认后的本地事务替换为带幂等键的真实履约任务。页面刷新会丢失当前协作列表，待确认单和会话实体仍在服务端保存。

@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Crossborder Commerce local data and credentials
+.uv-cache/
+.env.*
+!.env.example
+data/*.db*
+artifacts/

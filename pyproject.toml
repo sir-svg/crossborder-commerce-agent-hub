@@ -1,0 +1,33 @@
+[project]
+name = "crossborder-commerce-agent-hub"
+version = "0.1.0"
+description = "跨境电商混合智能中台：LangGraph + A2A + MCP"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.34,<1", "httpx>=0.28,<1",
+  "langgraph>=1.0,<2", "fastmcp>=2.13,<3", "a2a-sdk[http-server]>=0.3.20,<0.4",
+  "pydantic-settings>=2.7,<3", "redis>=5,<7",
+]
+
+[project.optional-dependencies]
+milvus = ["pymilvus>=2.6,<3"]
+dev = ["pytest>=8,<10", "pytest-asyncio>=0.25,<2", "ruff>=0.11,<1"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

@@ -1,0 +1,25 @@
+{
+  "products": [
+    {"sku":"SKU-1001","name":"Aurora 降噪耳机","category":"数码","price_usd":59.9,"stock":18,"supplier_stock":240,"weight_kg":0.35,"markets":["US","DE","GB","JP"],"keywords":"耳机 headphone audio","description":"蓝牙降噪，30小时续航；含锂电池，走带电渠道。"},
+    {"sku":"SKU-1002","name":"Nomad 旅行背包","category":"户外","price_usd":39.5,"stock":86,"supplier_stock":500,"weight_kg":0.65,"markets":["US","DE","GB","JP"],"keywords":"背包 backpack travel","description":"20L轻便通勤，防泼水面料，独立电脑隔层。"},
+    {"sku":"SKU-1003","name":"Lumi 桌面氛围灯","category":"家居","price_usd":24.9,"stock":7,"supplier_stock":80,"weight_kg":0.45,"markets":["US","DE","GB"],"keywords":"台灯 氛围灯 lamp light","description":"USB供电，三档色温；插头规格需按目的市场确认。"},
+    {"sku":"SKU-1004","name":"Terra 保温随行杯","category":"生活","price_usd":19.9,"stock":120,"supplier_stock":600,"weight_kg":0.3,"markets":["US","DE","GB","JP"],"keywords":"杯子 保温杯 bottle cup","description":"500ml不锈钢保温杯，旋盖防漏。"},
+    {"sku":"SKU-1005","name":"Swift 无线充电座","category":"数码","price_usd":29.9,"stock":33,"supplier_stock":150,"weight_kg":0.2,"markets":["US","GB","JP"],"keywords":"充电 charger wireless","description":"15W无线充电，适配器另售；兼容性以设备规格为准。"},
+    {"sku":"SKU-1006","name":"Paw 宠物旅行碗","category":"宠物","price_usd":12.9,"stock":65,"supplier_stock":320,"weight_kg":0.12,"markets":["US","DE","GB","JP"],"keywords":"宠物 碗 pet bowl","description":"便携折叠，适合户外出行。"}
+  ],
+  "orders": [
+    {"order_id":"CB-2026001","sku":"SKU-1001","quantity":2,"country":"US","status":"in_transit","tracking":"DEMO-US-001","total_usd":119.8},
+    {"order_id":"CB-2026002","sku":"SKU-1002","quantity":1,"country":"DE","status":"paid","tracking":null,"total_usd":39.5},
+    {"order_id":"CB-2026003","sku":"SKU-1003","quantity":1,"country":"GB","status":"delivered","tracking":"DEMO-GB-003","total_usd":24.9},
+    {"order_id":"CB-2026004","sku":"SKU-1004","quantity":3,"country":"JP","status":"paid","tracking":null,"total_usd":59.7}
+  ],
+  "documents": [
+    {"id":"policy-return","kind":"policy","title":"演示售后政策","text":"退货 退款 售后 return refund：本演示店铺支持签收后30天内申请退货，商品需保持完整。退款金额和运费需人工审核；目的地消费者法规优先，不能视为真实店铺承诺。"},
+    {"id":"policy-shipping","kind":"policy","title":"跨境配送说明","text":"物流 配送 延误 shipping delivery：演示时效美国5至8天，德国7至10天，英国6至9天，日本3至5天。均为模拟估算，不是承诺；海关查验会延长时效。"},
+    {"id":"policy-customs","kind":"policy","title":"税费与合规提示","text":"税费 关税 VAT 海关 德国 customs：报价以美元展示，不含税费与关税。欧盟VAT、产品认证、EPR及电池运输要求需真实业务接入后另行核验；不自动给出税额或合规结论。"},
+    {"id":"review-1001","kind":"review","sku":"SKU-1001","title":"耳机评论样本","text":"耳机 Aurora headphone：用户喜欢续航和通勤降噪，部分评论希望增加更小的耳塞。示例评分4.6/5，样本数32；均为合成数据。"},
+    {"id":"review-1002","kind":"review","sku":"SKU-1002","title":"背包评论样本","text":"背包 Nomad backpack：轻便和电脑隔层获得好评，侧袋空间偏小。示例评分4.7/5，样本数48；均为合成数据。"},
+    {"id":"asset-1001","kind":"marketing","sku":"SKU-1001","title":"耳机营销素材","text":"耳机 Aurora headphone：卖点为30小时续航、轻便通勤、蓝牙降噪。避免使用医疗功效、绝对静音或市场最低价等无法验证的表述。"},
+    {"id":"asset-1002","kind":"marketing","sku":"SKU-1002","title":"背包营销素材","text":"背包 Nomad backpack：卖点为20L轻便、防泼水、电脑隔层。使用城市通勤和短途旅行场景，不宣称完全防水。"}
+  ]
+}

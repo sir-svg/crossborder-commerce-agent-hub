@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light"><title>BORDER · 跨境智能协作台</title>
+  <link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="BORDER 首页"><span class="brand-mark">b.</span><span>BORDER<span class="brand-sub">COMMERCE INTELLIGENCE</span></span></a>
+    <div class="workspace"><span class="workspace-icon">跨</span><div>跨境运营空间<small>个人演示项目</small></div><span class="chevron">⌄</span></div>
+    <div class="nav-label">工作空间</div>
+    <nav aria-label="主导航">
+      <button class="nav-item active" data-tab="overview"><span>◫</span>运营总览</button>
+      <button class="nav-item" data-tab="products"><span>◇</span>商品与库存</button>
+      <button class="nav-item" data-tab="orders"><span>▤</span>跨境订单</button>
+      <button class="nav-item" data-tab="activity"><span>⌁</span>协作记录</button>
+    </nav>
+    <div class="nav-label agent-label">协作网络 <span>06</span></div>
+    <div class="agent-list"><div><i></i>商品助手 <small>内部</small></div><div><i></i>订单助手 <small>内部</small></div><div><i></i>客服助手 <small>内部</small></div><div><i></i>营销助手 <small>内部</small></div><div class="external"><i></i>供应商 Agent <small>A2A</small></div><div class="external"><i></i>物流 Agent <small>A2A</small></div></div>
+    <div class="sidebar-bottom"><span class="avatar">S</span><div>演示运营员<small>本地工作空间</small></div><span class="status-dot"></span></div>
+  </aside>
+  <div class="shell">
+    <header><div><span class="breadcrumb">工作空间</span><span class="slash">/</span><strong id="page-label">运营总览</strong></div><div class="header-right"><span class="demo-badge">演示环境</span><a href="/docs" target="_blank" rel="noreferrer">接口文档 ↗</a></div></header>
+    <main>
+      <section class="page-heading"><div><div class="eyebrow">YOUR OPERATIONS, CONNECTED</div><h1 id="page-title">跨越边界，协作有序。</h1><p id="page-description">从库存到交付，把复杂的跨境任务交给一个协作网络。</p></div><button id="new-session" class="secondary">＋ 新建会话</button></section>
+      <div class="environment-note"><span class="note-icon">i</span><span>这里的商品、订单与报价均为演示数据。补货和配送需要你确认，仅修改本地数据。</span><span id="connection" class="connection">连接中…</span></div>
+      <section class="metrics" aria-label="运营概况"><article><div>在售商品 <span>◇</span></div><strong id="metric-products">—</strong><small>覆盖美国 · 德国 · 英国 · 日本</small></article><article><div>待配送订单 <span>▤</span></div><strong id="metric-orders">—</strong><small>付款完成，等待安排配送</small></article><article><div>低库存商品 <span>↘</span></div><strong id="metric-stock">—</strong><small>库存低于 20 件，建议关注</small></article><article class="network-metric"><div>协作网络 <span>⌁</span></div><strong>4 <em>+ 2</em></strong><small>内部助手 + 外部业务伙伴</small></article></section>
+      <div class="main-grid">
+        <div class="content-column">
+          <section id="scenario-section" class="panel scenarios"><div class="section-heading"><div><span class="eyebrow">QUICK START</span><h2>从一个任务开始</h2></div><span class="muted">选择示例，体验完整协作</span></div><div class="scenario-grid">
+            <button class="scenario" data-prompt="查询 SKU-1001 的库存，并补货50件"><span class="scenario-icon mint">◇</span><strong>库存检查与补货</strong><span>商品助手 → 供应商</span><b>↗</b></button>
+            <button class="scenario" data-prompt="查看订单 CB-2026002，安排配送"><span class="scenario-icon blue">↗</span><strong>安排跨境配送</strong><span>订单助手 → 物流伙伴</span><b>↗</b></button>
+            <button class="scenario" data-prompt="SKU-1001 的退货政策是什么？看看评论"><span class="scenario-icon lilac">☏</span><strong>售后与评论检索</strong><span>客服助手 → 知识资料</span><b>↗</b></button>
+            <button class="scenario" data-prompt="为 SKU-1002 生成德国市场的营销文案"><span class="scenario-icon sand">✧</span><strong>多语言营销草稿</strong><span>营销助手 → 市场素材</span><b>↗</b></button>
+          </div></section>
+          <section class="panel data-panel"><div class="section-heading"><div><span class="eyebrow">COMMERCE DATA</span><h2 id="data-title">商品与库存</h2></div><button id="refresh" class="text-button">刷新数据 ↻</button></div><div class="data-tabs"><button class="selected" data-data="products">商品目录</button><button data-data="orders">订单列表</button></div><div class="table-wrap"><table><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div><div class="table-footer"><span id="data-count">正在读取演示数据</span><span>价格以 USD 展示 · 不含税费</span></div></section>
+          <section class="panel activity-panel" id="activity-panel"><div class="section-heading"><div><span class="eyebrow">ACTIVITY</span><h2>本次会话的协作记录</h2></div><span class="live-label"><i></i>实时更新</span></div><div id="activity-empty" class="empty-state">还没有协作记录。提交一个任务，看看助手如何协同处理。</div><div id="history"></div></section>
+        </div>
+        <aside class="assistant-panel panel"><div class="assistant-header"><div class="assistant-symbol">✳</div><div><h2>智能任务台</h2><span id="mode-label">演示规则模式 · 无需密钥</span></div><span class="online-dot"></span></div><div class="assistant-body"><div class="assistant-welcome"><span class="eyebrow">ONE REQUEST. A CONNECTED TEAM.</span><h3>告诉我，你想处理什么？</h3><p>可以查询商品、跟进订单、了解售后政策，或准备一份海外营销文案。</p></div><form id="task-form"><label for="message">任务描述</label><textarea id="message" maxlength="2000" rows="4" placeholder="例如：查一下耳机的库存，再补货50件" required></textarea><div class="form-foot"><span>同一会话记住商品与市场</span><button id="submit" class="primary" type="submit">开始协作 <span>↗</span></button></div></form><div id="task-status" role="status" aria-live="polite"></div><ol id="timeline" class="timeline" aria-label="任务处理过程"></ol><div id="answer-wrap" hidden><div class="answer-heading">处理结果 <span id="request-label"></span></div><div id="answer" class="answer"></div></div><div id="proposals"></div></div><div class="assistant-footer">可追溯的过程 · 人工确认后执行</div></aside>
+      </div>
+      <footer>BORDER <span>跨境电商混合智能中台</span><span class="footer-right">LangGraph · A2A · MCP</span></footer>
+    </main>
+  </div>
+</body>
+</html>
