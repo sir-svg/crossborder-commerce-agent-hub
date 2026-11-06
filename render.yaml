@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://render.com/schema/render.yaml.json
-# 仅创建一个免费服务。无付费磁盘、数据库或外部模型调用。
+# 仅创建一个免费计算服务，无付费磁盘或数据库。配置密钥后模型调用按提供商规则计费。
 services:
   - type: web
     name: border-commerce-demo
@@ -33,6 +33,6 @@ services:
       - key: MCP_URL
         value: ""
       - key: LLM_BASE_URL
-        value: ""
+        value: https://ws-wx3zg6zl1sf52rk4.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
       - key: LLM_MODEL
-        value: ""
+        value: deepseek-v4.1-flash-1017

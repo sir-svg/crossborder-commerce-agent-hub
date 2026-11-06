@@ -18,6 +18,16 @@ def create_tools(store: Store, knowledge: Knowledge) -> FastMCP:
         return store.order(order_id)
 
     @server.tool
+    def list_orders(country: str = "", status: str = "") -> list[dict]:
+        """按目的市场和订单状态列出演示订单，不创建配送。"""
+        return [
+            order
+            for order in store.all("orders")
+            if (not country or order["country"] == country)
+            and (not status or order["status"] == status)
+        ]
+
+    @server.tool
     def search_knowledge(query: str, sku: str = "") -> list[dict]:
         """检索售后政策、评论和营销素材，保留可追溯的来源编号。"""
         return knowledge.search(query, sku)

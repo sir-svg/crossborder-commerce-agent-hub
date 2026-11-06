@@ -1574,3 +1574,65 @@ footer {
     scroll-behavior: auto !important;
   }
 }
+/* Model response and saved conversation evidence. */
+.timeline li.is-running {
+  color: #f4a177;
+}
+.timeline li.is-running:before {
+  content: "…";
+  color: #f4a177;
+}
+.model-usage {
+  margin-top: 17px;
+  padding-top: 12px;
+  border-top: 1px solid #4d5542;
+  color: #9cad87;
+  font-family: var(--mono);
+  font-size: 8px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.model-usage:empty {
+  display: none;
+}
+.evidence {
+  margin-top: 18px;
+  border: 1px solid #4e5d40;
+  padding: 13px;
+  font-size: 10px;
+  color: #aab99b;
+}
+.evidence > summary {
+  cursor: pointer;
+  color: #c8d8b6;
+}
+.evidence p {
+  font-size: 10px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+.source-item {
+  border-top: 1px solid #48533d;
+  padding-top: 10px;
+  margin-top: 12px;
+}
+.source-item summary {
+  cursor: pointer;
+  font-size: 10px;
+  color: #b7c8a2;
+}
+.history-item > summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.8;
+}
+.history-item .history-answer {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 440px;
+  overflow: auto;
+}
+.answer-title {
+  color: #e5ebdb;
+}

@@ -47,6 +47,28 @@ def sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
+async def heartbeat_stream(stream):
+    iterator = stream.__aiter__()
+    pending = asyncio.create_task(anext(iterator))
+    try:
+        while True:
+            done, _ = await asyncio.wait({pending}, timeout=10)
+            if not done:
+                yield None
+                continue
+            try:
+                item = pending.result()
+            except StopAsyncIteration:
+                break
+            yield item
+            pending = asyncio.create_task(anext(iterator))
+    finally:
+        if not pending.done():
+            pending.cancel()
+        await asyncio.gather(pending, return_exceptions=True)
+        await iterator.aclose()
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     password = settings.demo_password.get_secret_value()
@@ -156,7 +178,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "status": "ok",
             "business_data": "synthetic-demo",
             "temporary_data": settings.demo_temporary_data,
-            "model": "configured" if Model(settings).enabled else "rule-demo",
+            "model": "configured" if app.state.workflow.model.enabled else "rule-demo",
+            "model_name": app.state.workflow.model.name
+            if app.state.workflow.model.enabled
+            else None,
+            "model_status": app.state.workflow.model.last_status,
             "memory": settings.memory_backend,
             "knowledge": settings.knowledge_backend,
             "supplier": "remote" if settings.supplier_url else "embedded-a2a",
@@ -170,6 +196,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "products": app.state.store.all("products"),
             "orders": app.state.store.all("orders"),
         }
+
+    @app.get("/api/model/status")
+    async def model_status():
+        return app.state.workflow.model.status()
+
+    @app.get("/api/history/{session_id}")
+    async def history(session_id: str):
+        return app.state.store.history(session_id)
 
     @app.get("/api/proposals/{session_id}")
     async def proposals(session_id: str):
@@ -204,11 +238,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     "session_id": body.session_id,
                     "request_id": request_id,
                 }
-                async with asyncio.timeout(120):
-                    async for update in app.state.workflow.graph.astream(
-                        state, stream_mode="updates"
-                    ):
-                        for node, patch in update.items():
+                async with asyncio.timeout(settings.workflow_timeout_seconds):
+                    stream = app.state.workflow.graph.astream(
+                        state, stream_mode=["updates", "custom"], version="v2"
+                    )
+                    async for part in heartbeat_stream(stream):
+                        if part is None:
+                            yield sse("heartbeat", {"request_id": request_id})
+                            continue
+                        if part["type"] == "custom":
+                            event = part["data"]
+                            yield sse(event["kind"], event)
+                            continue
+                        for node, patch in part["data"].items():
                             if patch:
                                 state.update(patch)
                             if node != "dispatch":
@@ -219,6 +261,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                             "answer": state["answer"],
                             "facts": state["results"],
                             "proposals": state["proposals"],
+                            "model_usage": state.get("model_usage", {}),
                             "request_id": request_id,
                         },
                     )

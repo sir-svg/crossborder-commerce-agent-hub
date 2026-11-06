@@ -1,6 +1,6 @@
 # 免费上线到 Render
 
-这一方案只创建 **1 个 Free Web Service**，不创建数据库、磁盘或付费模型服务。默认使用 SQLite、本地检索、进程内 A2A/MCP 协议服务，保留补货与配送等完整演示流程。
+这一方案只创建 **1 个 Free Web Service**，不创建数据库或付费磁盘。使用 SQLite、本地检索、进程内 A2A/MCP 协议服务，保留补货与配送等完整演示流程。没有密钥时运行规则演示；添加密钥后会调用外部模型，其费用由模型账号承担。
 
 ## 部署
 
@@ -26,17 +26,17 @@
 
 ## 如果选择手动创建 Web Service
 
-| 配置项 | 填写内容 |
-|---|---|
-| 仓库 | `sir-svg/crossborder-commerce-agent-hub` |
-| 分支 | `main` |
-| Language / Runtime | **Python 3**，不要选择自动发现的 Docker |
-| 套餐 | **Free** |
-| Build Command | `uv sync --frozen --no-dev` |
-| Start Command | `.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1` |
-| Health Check Path | `/api/health` |
+| 配置项             | 填写内容                                                                 |
+| ------------------ | ------------------------------------------------------------------------ |
+| 仓库               | `sir-svg/crossborder-commerce-agent-hub`                                 |
+| 分支               | `main`                                                                   |
+| Language / Runtime | **Python 3**，不要选择自动发现的 Docker                                  |
+| 套餐               | **Free**                                                                 |
+| Build Command      | `uv sync --frozen --no-dev`                                              |
+| Start Command      | `.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1` |
+| Health Check Path  | `/api/health`                                                            |
 
-将 `render.yaml` 中列出的环境变量添加到服务中。手动创建时要自己设置 `DEMO_PASSWORD`；`generateValue` 只由 Blueprint 自动处理。Python 版本由 `.python-version` 固定为3.13系列。这里使用原生 Python，不需要构建 Docker 镜像。
+将 `render.yaml` 中列出的环境变量添加到服务中。手动创建时要自己设置 `DEMO_PASSWORD`；`generateValue` 只由 Blueprint 自动处理。需要真实模型时再添加 `LLM_API_KEY`，地址和模型名已预设，[查看模型配置](model-setup.md)。Python 版本由 `.python-version` 固定为3.13系列。这里使用原生 Python，不需要构建 Docker 镜像。
 
 ## 免费版的实际限制
 
@@ -44,9 +44,9 @@
 - 库存、配送单和会话记忆是临时数据；休眠、重启或重新部署后会重新初始化。页面会显示这条提醒。
 - 访问密码保存在 Render 的环境配置中，应用数据重置不影响这个密码。
 - 所有人共享一套演示商品与订单，不是多人独立店铺。浏览器会话仍有各自的记忆与确认单归属。
-- 关闭自动部署，避免日常推送意外重置演示状态。需要更新时，在 Render 手动执行部署。
+- Blueprint 配置默认关闭自动部署；手动创建的服务以控制台设置为准。已打开自动部署时，推送代码会触发更新，并可能重置演示数据。
 - 免费额度、带宽和构建时间受 Render 账号的当期规则约束。若提示付费或 Free 不可用，先停止，不选择付费替代方案。
-- 默认没有配置任何模型密钥，因此不会产生模型调用费用。Redis、Milvus 和真实店铺均不在这个免费部署中运行。
+- 未配置密钥时不产生模型调用费用；添加 `LLM_API_KEY` 后按模型提供商规则计费。Redis、Milvus 和真实店铺均不在这个免费部署中运行。
 
 ## 部署后核对
 

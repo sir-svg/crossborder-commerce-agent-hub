@@ -24,6 +24,10 @@ class Store:
                     id TEXT PRIMARY KEY, session_id TEXT NOT NULL, kind TEXT NOT NULL,
                     payload TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending',
                     created_at TEXT NOT NULL, result TEXT);
+                CREATE TABLE IF NOT EXISTS chat_history (
+                    request_id TEXT PRIMARY KEY, session_id TEXT NOT NULL,
+                    message TEXT NOT NULL, answer TEXT NOT NULL,
+                    metadata TEXT NOT NULL, created_at TEXT NOT NULL);
             """)
             seed = json.loads(Path(__file__).with_name("seed.json").read_text(encoding="utf-8"))
             for table, key in [("products", "sku"), ("orders", "order_id"), ("documents", "id")]:
@@ -74,6 +78,36 @@ class Store:
                 "INSERT OR REPLACE INTO memory VALUES (?, ?)",
                 (session_id, json.dumps(value, ensure_ascii=False)),
             )
+
+    def add_turn(self, request_id: str, session_id: str, message: str, answer: str, metadata: dict):
+        with self.connect() as db:
+            db.execute(
+                "INSERT OR IGNORE INTO chat_history VALUES (?,?,?,?,?,?)",
+                (
+                    request_id,
+                    session_id,
+                    message,
+                    answer,
+                    json.dumps(metadata, ensure_ascii=False),
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+            db.execute(
+                "DELETE FROM chat_history WHERE session_id=? AND request_id NOT IN "
+                "(SELECT request_id FROM chat_history WHERE session_id=? "
+                "ORDER BY created_at DESC LIMIT 50)",
+                (session_id, session_id),
+            )
+
+    def history(self, session_id: str, limit: int = 20) -> list[dict]:
+        with self.connect() as db:
+            rows = db.execute(
+                "SELECT request_id,message,answer,metadata,created_at "
+                "FROM chat_history WHERE session_id=? "
+                "ORDER BY created_at DESC LIMIT ?",
+                (session_id, min(limit, 50)),
+            ).fetchall()
+        return [{**dict(row), "metadata": json.loads(row["metadata"])} for row in reversed(rows)]
 
     def propose(self, session_id: str, kind: str, payload: dict) -> dict:
         proposal_id = uuid4().hex

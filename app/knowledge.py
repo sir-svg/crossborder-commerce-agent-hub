@@ -57,14 +57,45 @@ class Knowledge:
                 output_fields=["source_id"],
             )[0]
             scores = {h["entity"]["source_id"]: h["distance"] for h in hits}
-            ranked = sorted(candidates, key=lambda d: scores.get(d["id"], -1), reverse=True)
+            ranked = sorted(
+                candidates,
+                key=lambda d: scores.get(d["id"], -1) + self.intent_boost(query, d),
+                reverse=True,
+            )
         else:
             ranked = sorted(
                 candidates,
-                key=lambda d: sum(a * b for a, b in zip(vector, embed(d["text"]))),
+                key=lambda d: (
+                    sum(a * b for a, b in zip(vector, embed(d["text"])))
+                    + self.intent_boost(query, d)
+                ),
                 reverse=True,
             )
         return [{**d, "source": d["id"]} for d in ranked[:limit]]
+
+    @staticmethod
+    def intent_boost(query: str, doc: dict) -> float:
+        """显式检索意图加权，避免商品名称冲淡政策与评论关键词。"""
+        query = query.lower()
+        groups = [
+            (["退", "refund", "return", "售后"], "policy-return"),
+            (["配送", "物流", "延误", "shipping", "delivery"], "policy-shipping"),
+            (["税", "关税", "清关", "认证", "vat", "customs"], "policy-customs"),
+        ]
+        bonus = sum(
+            1.5
+            for words, source in groups
+            if doc["id"] == source and any(word in query for word in words)
+        )
+        if doc["kind"] == "review" and any(
+            word in query for word in ["评论", "评价", "优缺点", "review"]
+        ):
+            bonus += 1.5
+        if doc["kind"] == "marketing" and any(
+            word in query for word in ["营销", "文案", "卖点", "marketing"]
+        ):
+            bonus += 1.5
+        return bonus
 
     def close(self):
         if self.client:

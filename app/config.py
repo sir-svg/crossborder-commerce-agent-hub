@@ -14,9 +14,13 @@ class Settings(BaseSettings):
     supplier_url: str = ""
     logistics_url: str = ""
     mcp_url: str = ""
-    llm_base_url: str = ""
-    llm_api_key: str = ""
-    llm_model: str = ""
+    llm_base_url: str = (
+        "https://ws-wx3zg6zl1sf52rk4.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+    )
+    llm_api_key: SecretStr = SecretStr("")
+    llm_model: str = "deepseek-v4.1-flash-1017"
+    llm_timeout_seconds: float = 40
+    workflow_timeout_seconds: int = 240
     public_demo: bool = False
     demo_username: str = "demo"
     demo_password: SecretStr = SecretStr("")

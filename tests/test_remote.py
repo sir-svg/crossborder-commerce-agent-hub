@@ -88,12 +88,12 @@ def test_supplier_outage_preserves_local_product_and_prevents_proposal(client):
 
 
 def test_llm_unavailable_falls_back_without_losing_facts(client):
-    async def unavailable(*args, **kwargs):
+    async def unavailable(request):
         raise httpx.ConnectError("model unavailable")
 
     model = client.app.state.workflow.model
     model.enabled = True
-    model.complete = unavailable
+    model.transport = httpx.MockTransport(unavailable)
     response = client.post(
         "/api/chat/stream", json={"session_id": "model-session", "message": "SKU-1001 库存"}
     )

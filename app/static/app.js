@@ -197,9 +197,125 @@ async function loadProposals() {
   const proposals = await (await api(`/api/proposals/${sessionId}`)).json();
   renderProposals(proposals);
 }
+function renderAnswer(answer) {
+  const target = $("#answer");
+  target.replaceChildren();
+  answer.split("\n").forEach((line, index) => {
+    if (index) target.append(document.createTextNode("\n"));
+    const heading = line.match(/^#{1,4}\s+(.+)$/);
+    if (heading) {
+      target.append(create("strong", "answer-title", heading[1]));
+      return;
+    }
+    const pieces = line.split(/(\*\*[^*]+\*\*)/g);
+    pieces.forEach((piece) =>
+      target.append(
+        piece.startsWith("**") && piece.endsWith("**")
+          ? create("strong", "", piece.slice(2, -2))
+          : document.createTextNode(piece),
+      ),
+    );
+  });
+}
+function usageLabel(usage = {}) {
+  if (usage.mode === "model")
+    return `${usage.model || "模型"} · ${usage.calls}次调用${usage.total_tokens != null ? ` · ${usage.total_tokens} Token` : ""}${usage.degraded ? " · 部分使用规则结果" : ""}`;
+  return usage.mode === "fallback"
+    ? "模型暂不可用，当前为规则查询结果"
+    : "规则演示模式 · 未调用模型";
+}
+function renderEvidence(facts = {}) {
+  const evidence = $("#evidence");
+  evidence.replaceChildren();
+  const sources = new Map();
+  Object.values(facts).forEach((result) => {
+    if (result.product) {
+      const p = result.product;
+      evidence.append(
+        create(
+          "p",
+          "",
+          `${p.name}（${p.sku}） / USD ${p.price_usd.toFixed(2)} / 本地库存 ${p.stock}件`,
+        ),
+      );
+    }
+    if (result.supplier)
+      evidence.append(
+        create(
+          "p",
+          "",
+          `供应商可用库存：${result.supplier.available}件（演示查询）`,
+        ),
+      );
+    if (result.order)
+      evidence.append(
+        create(
+          "p",
+          "",
+          `订单 ${result.order.order_id} / ${statuses[result.order.status] || result.order.status} / ${result.order.country}`,
+        ),
+      );
+    if (result.logistics)
+      evidence.append(
+        create(
+          "p",
+          "",
+          `演示运费 USD ${result.logistics.cost_usd.toFixed(2)} / 预计${result.logistics.eta_days.join("—")}天 / 不含税费`,
+        ),
+      );
+    (result.sources || []).forEach((source) =>
+      sources.set(source.source, source),
+    );
+  });
+  sources.forEach((source) => {
+    const item = create("details", "source-item"),
+      label = create("summary", "", `${source.title} [${source.source}]`);
+    item.append(label, create("p", "", source.text));
+    evidence.append(item);
+  });
+  $("#evidence-wrap").hidden = !evidence.childNodes.length;
+}
+function historyItem(turn) {
+  const item = create("details", "history-item");
+  item.append(
+    create("summary", "", turn.message),
+    create("p", "history-answer", turn.answer),
+    create(
+      "small",
+      "",
+      `${new Date(turn.created_at).toLocaleString("zh-CN")} · ${turn.request_id.slice(0, 8)}`,
+    ),
+  );
+  return item;
+}
+async function loadHistory() {
+  const turns = await (await api(`/api/history/${sessionId}`)).json();
+  $("#history").replaceChildren();
+  turns.forEach((turn) => $("#history").prepend(historyItem(turn)));
+  $("#activity-empty").hidden = turns.length > 0;
+}
 function handleEvent(event, payload, message) {
+  if (event === "activity") {
+    const running = {
+      orchestrator: "正在理解任务与上下文",
+      product: "商品助手正在查询和分析",
+      order: "订单助手正在核对配送",
+      support: "客服助手正在检索与回答",
+      marketing: "营销助手正在撰写文案",
+      summarize: "正在汇总各助手结果",
+    };
+    const li = create("li", "is-running", running[payload.node] || "正在处理");
+    li.dataset.node = payload.node;
+    $("#timeline").append(li);
+    showStatus(running[payload.node] || "正在处理…");
+  }
   if (event === "step") {
-    const li = create("li", "", labels[payload.node] || payload.node);
+    const li =
+      Array.from($("#timeline").children).find(
+        (item) => item.dataset.node === payload.node,
+      ) || create("li");
+    li.classList.remove("is-running");
+    li.textContent = labels[payload.node] || payload.node;
     if (payload.node === "orchestrator")
       li.append(
         create(
@@ -214,7 +330,7 @@ function handleEvent(event, payload, message) {
         create(
           "small",
           "",
-          `供应商 A2A 任务 ${result.supplier.task_id.slice(0, 8)} · MCP 库存查询`,
+          `供应商返回库存 · 任务 ${result.supplier.task_id.slice(0, 8)}`,
         ),
       );
     if (result?.logistics)
@@ -222,28 +338,32 @@ function handleEvent(event, payload, message) {
         create(
           "small",
           "",
-          `物流 A2A 任务 ${result.logistics.task_id.slice(0, 8)} · MCP 运费查询`,
+          `物流伙伴返回报价 · 任务 ${result.logistics.task_id.slice(0, 8)}`,
         ),
       );
-    $("#timeline").append(li);
+    if (result?.model_generated)
+      li.append(create("small", "", "模型已完成本环节分析"));
+    if (!li.parentNode) $("#timeline").append(li);
   }
+  if (event === "token") {
+    $("#answer-wrap").hidden = false;
+    $("#answer").textContent += payload.text;
+    $("#model-usage").textContent = "模型正在生成回复…";
+  }
+  if (event === "answer_reset") $("#answer").replaceChildren();
   if (event === "result") {
     $("#answer-wrap").hidden = false;
-    $("#answer").textContent = payload.answer;
+    renderAnswer(payload.answer);
+    renderEvidence(payload.facts);
     $("#request-label").textContent = payload.request_id.slice(0, 8);
+    $("#model-usage").textContent = usageLabel(payload.model_usage);
+    $("#mode-label").textContent =
+      payload.model_usage?.mode === "model"
+        ? `${payload.model_usage.model} · ${payload.model_usage.degraded ? "部分降级" : "本次已调用"}`
+        : payload.model_usage?.mode === "fallback"
+          ? "模型暂不可用 · 规则查询结果"
+          : "演示规则模式 · 未调用模型";
     showStatus("协作已完成。可在下方查看结果和待确认单。");
-    $("#activity-empty").hidden = true;
-    const history = create("article", "history-item");
-    history.append(
-      create("strong", "", message),
-      create("p", "", payload.answer.slice(0, 160)),
-      create(
-        "small",
-        "",
-        `${new Date().toLocaleTimeString("zh-CN")} · ${payload.request_id.slice(0, 8)}`,
-      ),
-    );
-    $("#history").prepend(history);
   }
   if (event === "error")
     showStatus(
@@ -260,6 +380,9 @@ $("#task-form").addEventListener("submit", async (event) => {
   $("#new-session").disabled = true;
   $("#timeline").replaceChildren();
   $("#answer-wrap").hidden = true;
+  $("#answer").replaceChildren();
+  $("#model-usage").textContent = "";
+  $("#evidence-wrap").hidden = true;
   $("#proposals").replaceChildren();
   showStatus("助手正在处理你的任务…");
   let gotResult = false;
@@ -305,6 +428,7 @@ $("#task-form").addEventListener("submit", async (event) => {
     $("#new-session").disabled = false;
     await Promise.all([
       refresh(),
+      loadHistory().catch((error) => showStatus(error.message, true)),
       loadProposals().catch((error) => showStatus(error.message, true)),
     ]);
   }
@@ -386,7 +510,7 @@ document.querySelectorAll("[data-tab]").forEach((button) =>
         "每一步，",
         "都有",
         "回响。",
-        "回看本次会话的作业结果与协作记录。刷新页面后仍可查看服务端保存的确认单。",
+        "回看本次会话的作业结果与协作记录，刷新页面也能继续查看。",
       ],
     };
     $("#page-title").replaceChildren(
@@ -425,7 +549,8 @@ $("#logout-form").addEventListener("submit", () => {
     const health = await (await api("/api/health")).json();
     $("#connection").textContent = "本地服务已连接";
     if (health.model === "configured")
-      $("#mode-label").textContent = "模型辅助模式 · 演示业务数据";
+      $("#mode-label").textContent =
+        `${health.model_name || "模型"} · ${health.model_status === "ready" ? "已连通" : "已配置，等待任务验证"}`;
     if (health.temporary_data) {
       $(".environment-note").replaceChildren(
         create("span", "demo-tag", "在线演示"),
@@ -435,7 +560,7 @@ $("#logout-form").addEventListener("submit", () => {
     }
     const user = await (await api("/api/auth/me")).json();
     $("#logout-form").hidden = !user.login_required;
-    await Promise.all([refresh(), loadProposals()]);
+    await Promise.all([refresh(), loadProposals(), loadHistory()]);
   } catch (error) {
     $("#connection").textContent = "连接失败";
     showStatus(error.message, true);

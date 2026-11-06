@@ -4,23 +4,28 @@
 
 开启密码保护时，先使用网页 `/login` 提交 `username` 和 `password` 表单；后续请求携带服务返回的 `border_session` Cookie。页面访问未登录时跳转到登录页，业务接口返回 JSON 401，不再使用 HTTP Basic 弹窗。会话最长8小时、退出时撤销、进程重启后失效。浏览器写请求还会校验 Origin，拒绝来自其他站点的提交。
 
-| 方法 | 路径 | 用途 |
-|---|---|---|
-| GET | `/api/health` | 查看实际运行模式与配置的组件 |
-| GET / POST | `/login` | 网页表单登录，成功后设置8小时 HttpOnly 会话 Cookie |
-| POST | `/logout` | 撤销当前登录会话并返回登录页 |
-| GET | `/api/auth/me` | 当前登录模式与用户名 |
-| GET | `/api/dashboard` | 商品目录和订单列表 |
-| POST | `/api/chat/stream` | 创建一轮协作，返回 SSE |
-| GET | `/api/proposals/{session_id}` | 当前会话的最近30个确认单 |
-| POST | `/api/proposals/{id}/approve` | 确认一张演示单据 |
-| GET | `/agents/{role}/.well-known/agent-card.json` | supplier / logistics 的能力卡 |
-| POST | `/agents/{role}/` | A2A 0.3 JSON-RPC，支持官方 SDK 的任务处理 |
+| 方法       | 路径                                         | 用途                                                   |
+| ---------- | -------------------------------------------- | ------------------------------------------------------ |
+| GET        | `/api/health`                                | 查看实际运行模式与配置的组件                           |
+| GET / POST | `/login`                                     | 网页表单登录，成功后设置8小时 HttpOnly 会话 Cookie     |
+| POST       | `/logout`                                    | 撤销当前登录会话并返回登录页                           |
+| GET        | `/api/auth/me`                               | 当前登录模式与用户名                                   |
+| GET        | `/api/model/status`                          | 模型是否配置、最近成功时间与安全的错误代码，不返回密钥 |
+| GET        | `/api/history/{session_id}`                  | 当前会话最近20轮完整问答与模型用量                     |
+| GET        | `/api/dashboard`                             | 商品目录和订单列表                                     |
+| POST       | `/api/chat/stream`                           | 创建一轮协作，返回 SSE                                 |
+| GET        | `/api/proposals/{session_id}`                | 当前会话的最近30个确认单                               |
+| POST       | `/api/proposals/{id}/approve`                | 确认一张演示单据                                       |
+| GET        | `/agents/{role}/.well-known/agent-card.json` | supplier / logistics 的能力卡                          |
+| POST       | `/agents/{role}/`                            | A2A 0.3 JSON-RPC，支持官方 SDK 的任务处理              |
 
 ## 发起任务
 
 ```json
-{"session_id":"demo-session-001","message":"查询 SKU-1001 的库存，并补货50件"}
+{
+  "session_id": "demo-session-001",
+  "message": "查询 SKU-1001 的库存，并补货50件"
+}
 ```
 
 `message` 为1～2000字符且不能为空白。`session_id` 为8～80位字母、数字、下划线或短横线。默认演示支持美国 US、德国 DE、英国 GB、日本 JP；没有指定市场时先复用会话记忆，否则使用 US。订单场景以订单中的目的地为准。
@@ -29,27 +34,35 @@
 event: start
 data: {"request_id":"..."}
 
+event: activity
+data: {"node":"orchestrator","phase":"running"}
+
 event: step
 data: {"node":"orchestrator","data":{"pending":["product"],"entities":{...}}}
 
 event: step
 data: {"node":"product","data":{"results":{...}}}
 
+event: token
+data: {"text":"模型生成的文本片段"}
+
 event: result
-data: {"answer":"...","facts":{...},"proposals":[...],"request_id":"..."}
+data: {"answer":"...","facts":{...},"proposals":[...],"model_usage":{"mode":"model","degraded":false,"calls":3,"model":"deepseek-v4.1-flash-1017","total_tokens":1234,"details":[...]},"request_id":"..."}
 
 event: done
 data: {"request_id":"..."}
 ```
 
-执行失败返回 `error` 事件，不会把内部堆栈或服务密钥返回给浏览器。HTTP 200 仅表示流已经建立，调用方仍须检查是否收到 `result`。总时限120秒，A2A 单次 HTTP 请求15秒，模型单次请求30秒；流关闭后清除当前会话的运行标记。同一进程同一会话并发任务返回409。
+`token` 只在模型汇总时发送，内容来自服务商真实流，不包含思维过程。若流中断后回退，先发送 `answer_reset`，客户端应清空未完成文本，再用最终 `result` 显示答复。每10秒发送 `heartbeat` 保持连接。用量的 `mode` 为 `model`、`fallback` 或 `rules`，`degraded` 标记局部降级；`total_tokens` 缺少服务商报告时为 null，不伪造统计。
+
+执行失败返回 `error` 事件，不会把内部堆栈或服务密钥返回给浏览器。HTTP 200 仅表示流已经建立，调用方仍须检查是否收到 `result`。默认总时限240秒，A2A 单次 HTTP 请求15秒，模型单次读取超时40秒；流关闭后清除当前会话的运行标记。同一进程同一会话并发任务返回409。断线后没有自动续传，请先核对待确认单和历史记录再重试。
 
 ## 确认单
 
 提交到 `/api/proposals/{id}/approve`：
 
 ```json
-{"session_id":"demo-session-001"}
+{ "session_id": "demo-session-001" }
 ```
 
 补货确认检查供应商剩余库存，把数量从供应商演示库存转入本地。配送确认要求订单为 `paid` 且本地库存足够，扣除本地库存，生成模拟运单。单据检查、数据变化和结果记录在同一 SQLite `BEGIN IMMEDIATE` 事务中完成。重复确认返回原结果。
