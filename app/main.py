@@ -179,7 +179,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def health():
         return {
             "status": "ok",
-            "release": "module-home-v2",
+            "release": "interactive-map-v3",
             "business_modules": ["product", "order", "support", "marketing"],
             "business_data": "synthetic-demo",
             "temporary_data": settings.demo_temporary_data,

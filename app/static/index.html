@@ -6,9 +6,12 @@
     <meta name="color-scheme" content="light" />
     <meta name="theme-color" content="#f1efe7" />
     <title>BORDER · 跨境作业台</title>
-    <link rel="stylesheet" href="/static/style.css?v=20261126-2" />
-    <script src="/static/app.js?v=20261126-2" defer></script>
-    <script src="/static/modules.js?v=20261126-2" defer></script>
+    <link rel="stylesheet" href="/static/vendor/leaflet.css" />
+    <link rel="stylesheet" href="/static/style.css?v=20261126-3" />
+    <script src="/static/vendor/leaflet.js" defer></script>
+    <script src="/static/app.js?v=20261126-3" defer></script>
+    <script src="/static/modules.js?v=20261126-3" defer></script>
+    <script src="/static/map.js?v=20261126-3" defer></script>
   </head>
   <body>
     <div class="utility-strip">
@@ -17,7 +20,7 @@
         ><i></i><span id="connection">正在连接服务</span></span
       >
       <div class="utility-account">
-        <span class="utility-edition">DEMO · 模块版 2</span>
+        <span class="utility-edition">DEMO · 全球工作台</span>
         <form id="logout-form" action="/logout" method="post" hidden>
           <button type="submit">退出登录 ↗</button>
         </form>
@@ -33,27 +36,23 @@
         ></a
       >
       <nav aria-label="主导航">
-        <button
-          class="nav-item active"
-          data-tab="overview"
-          data-label="运营总览"
-        >
-          <span aria-hidden="true">01</span>运营总览
+        <button class="nav-item active" data-tab="assistant" data-label="AI 对话" aria-current="page">
+          <span aria-hidden="true">01</span>AI 对话
+        </button>
+        <button class="nav-item" data-tab="overview" data-label="运营总览">
+          <span aria-hidden="true">02</span>运营总览
         </button>
         <button class="nav-item" data-tab="products" data-label="商品中心">
-          <span aria-hidden="true">02</span>商品中心
+          <span aria-hidden="true">03</span>商品中心
         </button>
         <button class="nav-item" data-tab="orders" data-label="订单中心">
-          <span aria-hidden="true">03</span>订单中心
+          <span aria-hidden="true">04</span>订单中心
         </button>
         <button class="nav-item" data-tab="support" data-label="客服中心">
-          <span aria-hidden="true">04</span>客服中心
+          <span aria-hidden="true">05</span>客服中心
         </button>
         <button class="nav-item" data-tab="marketing" data-label="营销中心">
-          <span aria-hidden="true">05</span>营销中心
-        </button>
-        <button class="nav-item" data-tab="assistant" data-label="AI 对话">
-          <span aria-hidden="true">06</span>AI 对话
+          <span aria-hidden="true">06</span>营销中心
         </button>
         <button class="nav-item" data-tab="activity" data-label="协作记录">
           <span aria-hidden="true">07</span>协作记录
@@ -64,204 +63,12 @@
       >
     </header>
     <main>
-      <section
-        id="module-launcher"
-        class="module-launcher"
-        aria-label="业务入口"
-      >
-        <div class="launcher-heading">
-          <div>
-            <h1>业务工作区</h1>
-            <p>选择一个功能直接办理，或进入 AI 对话处理跨模块任务。</p>
-          </div>
-          <a class="launcher-assistant" href="#assistant"
-            >AI 对话 <span aria-hidden="true">↗</span></a
-          >
-        </div>
-        <div class="launcher-grid">
-          <a class="launcher-card" href="#products">
-            <span class="launcher-icon" aria-hidden="true">▤</span>
-            <strong>商品中心</strong>
-            <span>库存查询 · 供应商 · 补货</span>
-            <span class="launcher-link">进入商品中心 ↗</span>
-          </a>
-          <a class="launcher-card" href="#orders">
-            <span class="launcher-icon" aria-hidden="true">⇢</span>
-            <strong>订单中心</strong>
-            <span>订单详情 · 物流报价 · 配送</span>
-            <span class="launcher-link">进入订单中心 ↗</span>
-          </a>
-          <a class="launcher-card" href="#support">
-            <span class="launcher-icon" aria-hidden="true">≡</span>
-            <strong>客服中心</strong>
-            <span>售后政策 · 评论 · 客服回答</span>
-            <span class="launcher-link">进入客服中心 ↗</span>
-          </a>
-          <a class="launcher-card" href="#marketing">
-            <span class="launcher-icon" aria-hidden="true">✳</span>
-            <strong>营销中心</strong>
-            <span>目标市场 · 多语言文案</span>
-            <span class="launcher-link">进入营销中心 ↗</span>
-          </a>
-        </div>
-      </section>
-      <section class="hero">
-        <div class="hero-copy">
-          <div class="eyebrow">
-            <span class="orange-square"></span
-            ><span id="page-label">运营总览</span
-            ><span class="hero-code"> / OPERATIONS DESK</span>
-          </div>
-          <h1 id="page-title">把生意，<br />送到<span>世界。</span></h1>
-          <p id="page-description">
-            商品、订单、履约与营销。<br />从一个指令开始，让每个环节接上下一程。
-          </p>
-          <div class="hero-foot">
-            <span class="hero-rule"></span><span>内部协作 × 外部伙伴</span
-            ><span class="hero-foot-index">04 + 02</span>
-          </div>
-        </div>
-        <div class="route-board" aria-label="从深圳出发的四个市场演示线路">
-          <div class="route-board-heading">
-            <span><i></i> MARKET CONNECTIONS</span><span>演示线路图 / 04</span>
-          </div>
-          <svg
-            class="world-map"
-            viewBox="0 0 620 270"
-            role="img"
-            aria-labelledby="map-title"
-          >
-            <title id="map-title">
-              深圳至美国、德国、英国和日本的示意线路，非实时物流
-            </title>
-            <defs>
-              <pattern
-                id="land-dots"
-                width="5"
-                height="5"
-                patternUnits="userSpaceOnUse"
-              >
-                <circle cx="2" cy="2" r="1" fill="#c3c2b5" />
-              </pattern>
-            </defs>
-            <g class="map-grid">
-              <path
-                d="M0 70H620M0 135H620M0 200H620M103 20V245M206 20V245M310 20V245M413 20V245M516 20V245"
-              />
-            </g>
-            <g class="continents" fill="url(#land-dots)">
-              <path
-                d="m42 58 30-17 27 7 20-14 35 5 11 15 32 3-10 14-27 10-10 19-23 7-7 24-19 4-12-18-18-4-9-24-24-4zM120 136l18 12 16 4 7 17 18 9-6 32-15 28-14 11-6-26-13-20-4-25-12-13zM197 29l18-8 15 4 3 17-14 16-19-4z"
-              />
-              <path
-                d="m270 62 13-12 14 4 5-10 20 2 9 14-7 9 9 12-15 7-11-8-10 8-10-9-17 3-10-9zM280 95l32-7 25 13 10 27-17 22-9 30-20 9-12-25-12-14-11-29zM330 50l28-16 41 2 22-8 44 9 21-5 35 14 42 3 10 24-23 10-16 22-27 2-12 21-16-8-16 17-16-11-11-23-20-4-17-17-29 3-14-19-17 9-14-11zM416 126l18 11 5 24 17 13-4 12-21-12-13-20zM476 162l21 7 10-1 15 9-9 10-30-8zM484 205l21-16 34 2 19 22-9 19-31 3-15-13-17 4zM554 120l10-20 4 9-6 17zM566 233l9-9 4 16-7 8z"
-              />
-            </g>
-            <g class="routes">
-              <path
-                class="route"
-                data-country="US"
-                d="M470 138Q320 -8 141 99"
-              />
-              <path
-                class="route"
-                data-country="GB"
-                d="M470 138Q386 16 292 69"
-              />
-              <path
-                class="route"
-                data-country="DE"
-                d="M470 138Q396 45 310 75"
-              />
-              <path
-                class="route"
-                data-country="JP"
-                d="M470 138Q507 64 542 106"
-              />
-            </g>
-            <g class="map-destinations">
-              <g class="map-point" data-country="US">
-                <circle cx="141" cy="99" r="4" />
-                <text x="112" y="86">美国 US</text>
-              </g>
-              <g class="map-point" data-country="GB">
-                <circle cx="292" cy="69" r="4" />
-                <text x="243" y="52">英国 GB</text>
-              </g>
-              <g class="map-point" data-country="DE">
-                <circle cx="310" cy="75" r="4" />
-                <text x="318" y="68">德国 DE</text>
-              </g>
-              <g class="map-point" data-country="JP">
-                <circle cx="542" cy="106" r="4" />
-                <text x="548" y="91">日本 JP</text>
-              </g>
-              <g class="origin">
-                <circle class="origin-ring" cx="470" cy="138" r="10" />
-                <circle cx="470" cy="138" r="4" />
-                <text x="448" y="165">深圳 / 起点</text>
-              </g>
-            </g>
-            <text class="map-coordinate" x="8" y="252">
-              22°32′ N / 114°03′ E
-            </text>
-            <text class="map-coordinate" x="448" y="252">
-              SCHEMATIC ROUTES ONLY
-            </text>
-          </svg>
-          <div
-            class="market-switch"
-            role="group"
-            aria-label="按目的市场筛选商品"
-          >
-            <button class="selected" data-market="all" aria-pressed="true">
-              全部市场</button
-            ><button data-market="US" aria-pressed="false">
-              US <span>美国</span></button
-            ><button data-market="DE" aria-pressed="false">
-              DE <span>德国</span></button
-            ><button data-market="GB" aria-pressed="false">
-              GB <span>英国</span></button
-            ><button data-market="JP" aria-pressed="false">
-              JP <span>日本</span>
-            </button>
-          </div>
-        </div>
-      </section>
-      <section class="metrics" aria-label="运营概况">
-        <article>
-          <div><span class="metric-index">01 /</span> 在售商品</div>
-          <strong id="metric-products">—</strong
-          ><small>四个目的市场的商品目录</small>
-        </article>
-        <article>
-          <div><span class="metric-index">02 /</span> 待配送订单</div>
-          <strong id="metric-orders">—</strong><small>已付款，等待下一程</small>
-        </article>
-        <article>
-          <div><span class="metric-index">03 /</span> 低库存商品</div>
-          <strong id="metric-stock">—</strong><small>库存低于 20 件</small>
-        </article>
-        <article class="network-metric">
-          <div><span class="metric-index">04 /</span> 协作网络</div>
-          <strong>4<span class="metric-plus">+</span>2</strong
-          ><small>内部助手 / 外部伙伴</small>
-        </article>
-      </section>
-      <div class="desk-heading">
-        <h2>今日作业<span> / WORKSPACE</span></h2>
-        <div class="environment-note">
-          <span class="demo-tag">演示</span>合成业务数据 ·
-          补货与配送确认后仅修改本地数据
-        </div>
-      </div>
-      <section id="module-workspace" aria-label="独立业务操作" hidden></section>
-      <div class="main-grid single-column">
-        <aside class="assistant-panel" aria-label="智能任务台" hidden>
+      <section class="hero ai-first">
+        <aside class="assistant-panel" aria-label="智能任务台">
           <div class="assistant-header">
             <span class="dispatch-mark" aria-hidden="true">↗</span>
             <div>
-              <h2>智能任务台</h2>
+              <h2>AI 对话 · 智能任务台</h2>
               <span id="mode-label">演示规则模式 · 无需密钥</span>
             </div>
             <button
@@ -320,6 +127,132 @@
             >
           </div>
         </aside>
+        <div class="hero-copy" hidden>
+          <div class="eyebrow">
+            <span class="orange-square"></span
+            ><span id="page-label">运营总览</span
+            ><span class="hero-code"> / OPERATIONS DESK</span>
+          </div>
+          <h1 id="page-title">把生意，<br />送到<span>世界。</span></h1>
+          <p id="page-description">
+            商品、订单、履约与营销。<br />从一个指令开始，让每个环节接上下一程。
+          </p>
+          <div class="hero-foot">
+            <span class="hero-rule"></span><span>内部协作 × 外部伙伴</span
+            ><span class="hero-foot-index">04 + 02</span>
+          </div>
+        </div>
+        <div class="route-board" aria-label="从深圳出发的四个市场演示线路">
+          <div class="route-board-heading">
+            <span><i></i> MARKET CONNECTIONS</span><span>真实地理底图 / 04</span>
+          </div>
+          <div class="map-header">
+            <div><h2>全球市场网络</h2><p>从深圳出发，探索四个目的市场</p></div>
+            <button id="map-reset" type="button" title="恢复世界视图">⌖ 全图</button>
+          </div>
+          <div id="world-map" class="interactive-world-map" role="region" aria-label="互动世界地图，拖动平移，使用加减按钮缩放">
+            <div id="map-loading" role="status">正在加载世界地图…</div>
+          </div>
+          <div class="map-legend">
+            <span><i></i> 演示航线</span>
+            <span>拖动地图 · 点击市场 · ＋/－ 缩放</span>
+            <a href="https://www.naturalearthdata.com/" target="_blank" rel="noreferrer">Natural Earth</a>
+          </div>
+          <div id="map-market-detail" class="map-market-detail" aria-live="polite">
+            <div class="map-detail-title"><span id="map-market-code">GLOBAL</span><strong id="map-market-name">全部市场</strong><small id="map-market-distance">四条演示航线 · 非实时物流</small></div>
+            <div><span>在售商品</span><strong id="map-product-count">—</strong></div>
+            <div><span>订单</span><strong id="map-order-count">—</strong></div>
+            <div><span>待配送</span><strong id="map-pending-count">—</strong></div>
+          </div>
+          <div
+            class="market-switch"
+            role="group"
+            aria-label="按目的市场筛选商品"
+          >
+            <button class="selected" data-market="all" aria-pressed="true">
+              全部市场</button
+            ><button data-market="US" aria-pressed="false">
+              US <span>美国</span></button
+            ><button data-market="DE" aria-pressed="false">
+              DE <span>德国</span></button
+            ><button data-market="GB" aria-pressed="false">
+              GB <span>英国</span></button
+            ><button data-market="JP" aria-pressed="false">
+              JP <span>日本</span>
+            </button>
+          </div>
+        </div>
+      </section>
+      <section
+        id="module-launcher"
+        class="module-launcher"
+        aria-label="业务入口"
+      >
+        <div class="launcher-heading">
+          <div>
+            <h2>业务工作区</h2>
+            <p>四个独立功能，直接办理，无需发送对话指令。</p>
+          </div>
+          <a class="launcher-assistant" href="#assistant" hidden
+            >AI 对话 <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <div class="launcher-grid">
+          <a class="launcher-card" href="#products">
+            <span class="launcher-icon" aria-hidden="true">▤</span>
+            <strong>商品中心</strong>
+            <span>库存查询 · 供应商 · 补货</span>
+            <span class="launcher-link">进入商品中心 ↗</span>
+          </a>
+          <a class="launcher-card" href="#orders">
+            <span class="launcher-icon" aria-hidden="true">⇢</span>
+            <strong>订单中心</strong>
+            <span>订单详情 · 物流报价 · 配送</span>
+            <span class="launcher-link">进入订单中心 ↗</span>
+          </a>
+          <a class="launcher-card" href="#support">
+            <span class="launcher-icon" aria-hidden="true">≡</span>
+            <strong>客服中心</strong>
+            <span>售后政策 · 评论 · 客服回答</span>
+            <span class="launcher-link">进入客服中心 ↗</span>
+          </a>
+          <a class="launcher-card" href="#marketing">
+            <span class="launcher-icon" aria-hidden="true">✳</span>
+            <strong>营销中心</strong>
+            <span>目标市场 · 多语言文案</span>
+            <span class="launcher-link">进入营销中心 ↗</span>
+          </a>
+        </div>
+      </section>
+      <section class="metrics" aria-label="运营概况">
+        <article>
+          <div><span class="metric-index">01 /</span> 在售商品</div>
+          <strong id="metric-products">—</strong
+          ><small>四个目的市场的商品目录</small>
+        </article>
+        <article>
+          <div><span class="metric-index">02 /</span> 待配送订单</div>
+          <strong id="metric-orders">—</strong><small>已付款，等待下一程</small>
+        </article>
+        <article>
+          <div><span class="metric-index">03 /</span> 低库存商品</div>
+          <strong id="metric-stock">—</strong><small>库存低于 20 件</small>
+        </article>
+        <article class="network-metric">
+          <div><span class="metric-index">04 /</span> 协作网络</div>
+          <strong>4<span class="metric-plus">+</span>2</strong
+          ><small>内部助手 / 外部伙伴</small>
+        </article>
+      </section>
+      <div class="desk-heading">
+        <h2>今日作业<span> / WORKSPACE</span></h2>
+        <div class="environment-note">
+          <span class="demo-tag">演示</span>合成业务数据 ·
+          补货与配送确认后仅修改本地数据
+        </div>
+      </div>
+      <section id="module-workspace" aria-label="独立业务操作" hidden></section>
+      <div class="main-grid single-column">
         <div class="content-column">
           <section id="scenario-section" class="scenarios" hidden>
             <div class="section-heading">

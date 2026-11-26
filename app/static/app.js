@@ -12,7 +12,7 @@ let data = { products: [], orders: [] },
   dataTab = "products",
   market = "all",
   busy = false,
-  activeTab = "overview";
+  activeTab = "assistant";
 const marketNames = { US: "美国", DE: "德国", GB: "英国", JP: "日本" };
 const productPaths = {
   "SKU-1001": "M5 13v-2a7 7 0 0 1 14 0v2M5 12H3v7h4v-7H5m14 0h2v7h-4v-7h2",
@@ -74,6 +74,7 @@ async function refresh() {
       .padStart(2, "0");
     renderTable();
     window.borderModules?.refresh(data);
+    window.borderMap?.refresh(data);
   } catch (error) {
     showStatus(error.message, true);
   }
@@ -498,16 +499,7 @@ document.querySelectorAll("[data-market]").forEach((button) =>
       b.classList.toggle("selected", b === button);
       b.setAttribute("aria-pressed", String(b === button));
     });
-    document.querySelectorAll("[data-country]").forEach((route) => {
-      route.classList.toggle(
-        "is-dimmed",
-        market !== "all" && route.dataset.country !== market,
-      );
-      route.classList.toggle(
-        "is-selected",
-        market !== "all" && route.dataset.country === market,
-      );
-    });
+    window.borderMap?.setMarket(market);
     renderTable();
   }),
 );
@@ -590,10 +582,13 @@ function showTab(tab) {
   $("#page-description").textContent = titles[tab][3];
   $(".hero").hidden = independent;
   $(".metrics").hidden = independent;
-  $("#module-launcher").hidden = tab !== "overview";
+  $("#module-launcher").hidden = !["overview", "assistant"].includes(tab);
+  $(".launcher-assistant").hidden = tab === "assistant";
+  $(".hero-copy").hidden = tab === "assistant";
+  $(".hero").classList.toggle("ai-first", tab === "assistant");
   $(".assistant-panel").hidden = tab !== "assistant";
   $(".main-grid").hidden = ["support", "marketing"].includes(tab);
-  $(".main-grid").classList.toggle("single-column", tab !== "assistant");
+  if (!independent) window.borderMap?.resize();
   $("#scenario-section").hidden = tab !== "assistant";
   $(".data-panel").hidden = ![
     "overview",
@@ -644,7 +639,7 @@ function routeFromHash() {
   const valid = Array.from(document.querySelectorAll("[data-tab]")).some(
     (button) => button.dataset.tab === requested,
   );
-  showTab(valid ? requested : "overview");
+  showTab(valid ? requested : "assistant");
   window.scrollTo(0, 0);
 }
 window.addEventListener("hashchange", routeFromHash);

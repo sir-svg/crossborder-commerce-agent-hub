@@ -26,8 +26,17 @@ def test_dashboard_and_static_assets(client):
     assert len(data["products"]) == 6
     assert len(data["orders"]) == 4
     assert client.get("/api/health").json()["model"] == "rule-demo"
-    assert client.get("/api/health").json()["release"] == "module-home-v2"
-    assert "BORDER" in client.get("/").text
+    assert client.get("/api/health").json()["release"] == "interactive-map-v3"
+    page = client.get("/").text
+    assert "BORDER" in page
+    assert page.index('data-tab="assistant"') < page.index('data-tab="overview"')
+    assert 'id="world-map"' in page
+    assert client.get("/static/map.js").status_code == 200
+    assert client.get("/static/vendor/leaflet.js").status_code == 200
+    geography = client.get("/static/maps/world.geojson").json()
+    assert geography["type"] == "FeatureCollection"
+    assert len(geography["features"]) >= 170
+    assert {"US", "DE", "GB", "JP"} <= {f["properties"]["code"] for f in geography["features"]}
     assert client.get("/static/app.js").status_code == 200
 
 
