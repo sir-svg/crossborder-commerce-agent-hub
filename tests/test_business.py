@@ -26,6 +26,7 @@ def test_dashboard_and_static_assets(client):
     assert len(data["products"]) == 6
     assert len(data["orders"]) == 4
     assert client.get("/api/health").json()["model"] == "rule-demo"
+    assert client.get("/api/health").json()["release"] == "module-home-v2"
     assert "BORDER" in client.get("/").text
     assert client.get("/static/app.js").status_code == 200
 

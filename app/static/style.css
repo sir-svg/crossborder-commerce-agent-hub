@@ -1851,6 +1851,108 @@ footer {
 .module-source p {
   margin-top: 8px;
 }
+.module-launcher {
+  padding: 32px 0 26px;
+  border-bottom: 1px solid var(--line);
+}
+.launcher-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+.launcher-heading h1 {
+  margin: 0 0 8px;
+  font-size: clamp(26px, 3vw, 40px);
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+.launcher-heading p {
+  margin: 0;
+  color: #656960;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.launcher-assistant {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--dark);
+  color: #f7f6f0;
+  padding: 13px 18px;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+}
+.launcher-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--line);
+  background: #f7f5ed;
+  transition:
+    background 140ms,
+    border-color 140ms;
+}
+.launcher-card:hover,
+.launcher-card:focus-visible {
+  background: #fffdf7;
+  border-color: var(--orange);
+}
+.launcher-card strong {
+  font-size: 18px;
+}
+.launcher-icon {
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  width: 30px;
+  height: 30px;
+  background: #e4e6d7;
+  font-size: 17px;
+}
+.launcher-card > span:not(.launcher-icon) {
+  font-size: 12px;
+  color: #60675a;
+  line-height: 1.65;
+}
+.launcher-card .launcher-link {
+  margin-top: 10px;
+  font-weight: 650;
+  color: #a63b17 !important;
+}
+@media (max-width: 880px) {
+  .launcher-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 430px) {
+  .module-launcher {
+    padding-top: 23px;
+  }
+  .launcher-card {
+    padding: 12px;
+    gap: 7px;
+  }
+  .launcher-card strong {
+    font-size: 16px;
+  }
+  .launcher-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .launcher-card > span:not(.launcher-icon) {
+    font-size: 11px;
+  }
+}
 .module-confirm-section {
   border-top: 1px solid var(--line);
   padding-top: 16px;

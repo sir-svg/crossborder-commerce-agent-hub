@@ -6,9 +6,9 @@
     <meta name="color-scheme" content="light" />
     <meta name="theme-color" content="#f1efe7" />
     <title>BORDER · 跨境作业台</title>
-    <link rel="stylesheet" href="/static/style.css" />
-    <script src="/static/app.js" defer></script>
-    <script src="/static/modules.js" defer></script>
+    <link rel="stylesheet" href="/static/style.css?v=20261126-2" />
+    <script src="/static/app.js?v=20261126-2" defer></script>
+    <script src="/static/modules.js?v=20261126-2" defer></script>
   </head>
   <body>
     <div class="utility-strip">
@@ -17,7 +17,7 @@
         ><i></i><span id="connection">正在连接服务</span></span
       >
       <div class="utility-account">
-        <span class="utility-edition">DEMO EDITION — 001</span>
+        <span class="utility-edition">DEMO · 模块版 2</span>
         <form id="logout-form" action="/logout" method="post" hidden>
           <button type="submit">退出登录 ↗</button>
         </form>
@@ -64,6 +64,47 @@
       >
     </header>
     <main>
+      <section
+        id="module-launcher"
+        class="module-launcher"
+        aria-label="业务入口"
+      >
+        <div class="launcher-heading">
+          <div>
+            <h1>业务工作区</h1>
+            <p>选择一个功能直接办理，或进入 AI 对话处理跨模块任务。</p>
+          </div>
+          <a class="launcher-assistant" href="#assistant"
+            >AI 对话 <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <div class="launcher-grid">
+          <a class="launcher-card" href="#products">
+            <span class="launcher-icon" aria-hidden="true">▤</span>
+            <strong>商品中心</strong>
+            <span>库存查询 · 供应商 · 补货</span>
+            <span class="launcher-link">进入商品中心 ↗</span>
+          </a>
+          <a class="launcher-card" href="#orders">
+            <span class="launcher-icon" aria-hidden="true">⇢</span>
+            <strong>订单中心</strong>
+            <span>订单详情 · 物流报价 · 配送</span>
+            <span class="launcher-link">进入订单中心 ↗</span>
+          </a>
+          <a class="launcher-card" href="#support">
+            <span class="launcher-icon" aria-hidden="true">≡</span>
+            <strong>客服中心</strong>
+            <span>售后政策 · 评论 · 客服回答</span>
+            <span class="launcher-link">进入客服中心 ↗</span>
+          </a>
+          <a class="launcher-card" href="#marketing">
+            <span class="launcher-icon" aria-hidden="true">✳</span>
+            <strong>营销中心</strong>
+            <span>目标市场 · 多语言文案</span>
+            <span class="launcher-link">进入营销中心 ↗</span>
+          </a>
+        </div>
+      </section>
       <section class="hero">
         <div class="hero-copy">
           <div class="eyebrow">
@@ -215,8 +256,8 @@
         </div>
       </div>
       <section id="module-workspace" aria-label="独立业务操作" hidden></section>
-      <div class="main-grid">
-        <aside class="assistant-panel" aria-label="智能任务台">
+      <div class="main-grid single-column">
+        <aside class="assistant-panel" aria-label="智能任务台" hidden>
           <div class="assistant-header">
             <span class="dispatch-mark" aria-hidden="true">↗</span>
             <div>
@@ -280,7 +321,7 @@
           </div>
         </aside>
         <div class="content-column">
-          <section id="scenario-section" class="scenarios">
+          <section id="scenario-section" class="scenarios" hidden>
             <div class="section-heading">
               <div>
                 <span class="section-index">A /</span>

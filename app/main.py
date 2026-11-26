@@ -179,6 +179,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def health():
         return {
             "status": "ok",
+            "release": "module-home-v2",
+            "business_modules": ["product", "order", "support", "marketing"],
             "business_data": "synthetic-demo",
             "temporary_data": settings.demo_temporary_data,
             "model": "configured" if app.state.workflow.model.enabled else "rule-demo",

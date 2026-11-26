@@ -523,99 +523,132 @@ $("#table-market").addEventListener("change", (event) => {
   );
   if (button) button.click();
 });
-document.querySelectorAll("[data-tab]").forEach((button) =>
-  button.addEventListener("click", () => {
-    const tab = button.dataset.tab;
-    activeTab = tab;
-    const independent = ["products", "orders", "support", "marketing"].includes(
-      tab,
-    );
-    document
-      .querySelectorAll("[data-tab]")
-      .forEach((b) => b.classList.toggle("active", b === button));
-    $("#page-label").textContent = button.dataset.label;
-    const titles = {
-      overview: [
-        "把生意，",
-        "送到",
-        "世界。",
-        "商品、订单、履约与营销。从一个指令开始，让每个环节接上下一程。",
-      ],
-      products: [
-        "每一件货，",
-        "都心中",
-        "有数。",
-        "查阅商品目录、筛选目的市场，和供应商一起接好下一批库存。",
-      ],
-      orders: [
-        "下一程，",
-        "准时",
-        "出发。",
-        "跟进跨境订单，查询演示运费，并确认配送任务。",
-      ],
-      support: [
-        "贴近客户，",
-        "听见",
-        "需求。",
-        "查询政策、回顾评论并准备客服回复。",
-      ],
-      marketing: [
-        "跨越市场，",
-        "说好",
-        "产品。",
-        "根据商品资料生成多语言推广草稿。",
-      ],
-      assistant: [
-        "一个指令，",
-        "连接",
-        "全程。",
-        "让多个助手协作处理跨境电商任务。",
-      ],
-      activity: [
-        "每一步，",
-        "都有",
-        "回响。",
-        "回看本次会话的作业结果与协作记录，刷新页面也能继续查看。",
-      ],
-    };
-    $("#page-title").replaceChildren(
-      document.createTextNode(titles[tab][0]),
-      create("br"),
-      document.createTextNode(titles[tab][1]),
-      create("span", "", titles[tab][2]),
-    );
-    $("#page-description").textContent = titles[tab][3];
-    $(".hero").hidden = independent;
-    $(".metrics").hidden = independent;
-    $(".assistant-panel").hidden = independent || tab === "activity";
-    $(".main-grid").hidden = ["support", "marketing"].includes(tab);
-    $(".main-grid").classList.toggle(
-      "single-column",
-      independent || tab === "activity",
-    );
-    $("#scenario-section").hidden = !["overview", "assistant"].includes(tab);
-    $(".data-panel").hidden = ![
-      "overview",
-      "products",
-      "orders",
-      "assistant",
-    ].includes(tab);
-    $("#activity-panel").hidden = ![
-      "overview",
-      "activity",
-      "assistant",
-    ].includes(tab);
-    $("#table-filter").hidden = !["products", "orders"].includes(tab);
-    $("#table-market").value = market;
-    document.querySelector(".data-tabs").hidden = independent;
-    $("#module-workspace").hidden = !independent;
-    if (independent) window.borderModules?.open(tab);
-    if (["products", "orders"].includes(tab)) {
-      dataTab = tab;
-      renderTable();
-    }
-  }),
-);
+function showTab(tab) {
+  const buttons = Array.from(document.querySelectorAll("[data-tab]"));
+  const button = buttons.find((item) => item.dataset.tab === tab);
+  if (!button) return;
+  activeTab = tab;
+  const independent = ["products", "orders", "support", "marketing"].includes(
+    tab,
+  );
+  buttons.forEach((b) => {
+    b.classList.toggle("active", b === button);
+    if (b === button) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
+  $("#page-label").textContent = button.dataset.label;
+  const titles = {
+    overview: [
+      "把生意，",
+      "送到",
+      "世界。",
+      "商品、订单、履约与营销的业务概况。",
+    ],
+    products: [
+      "每一件货，",
+      "都心中",
+      "有数。",
+      "查阅商品目录、筛选目的市场，和供应商一起接好下一批库存。",
+    ],
+    orders: [
+      "下一程，",
+      "准时",
+      "出发。",
+      "跟进跨境订单，查询演示运费，并确认配送任务。",
+    ],
+    support: [
+      "贴近客户，",
+      "听见",
+      "需求。",
+      "查询政策、回顾评论并准备客服回复。",
+    ],
+    marketing: [
+      "跨越市场，",
+      "说好",
+      "产品。",
+      "根据商品资料生成多语言推广草稿。",
+    ],
+    assistant: [
+      "一个指令，",
+      "连接",
+      "全程。",
+      "让多个助手协作处理跨境电商任务。",
+    ],
+    activity: [
+      "每一步，",
+      "都有",
+      "回响。",
+      "回看本次会话的作业结果与协作记录，刷新页面也能继续查看。",
+    ],
+  };
+  $("#page-title").replaceChildren(
+    document.createTextNode(titles[tab][0]),
+    create("br"),
+    document.createTextNode(titles[tab][1]),
+    create("span", "", titles[tab][2]),
+  );
+  $("#page-description").textContent = titles[tab][3];
+  $(".hero").hidden = independent;
+  $(".metrics").hidden = independent;
+  $("#module-launcher").hidden = tab !== "overview";
+  $(".assistant-panel").hidden = tab !== "assistant";
+  $(".main-grid").hidden = ["support", "marketing"].includes(tab);
+  $(".main-grid").classList.toggle("single-column", tab !== "assistant");
+  $("#scenario-section").hidden = tab !== "assistant";
+  $(".data-panel").hidden = ![
+    "overview",
+    "products",
+    "orders",
+    "assistant",
+  ].includes(tab);
+  $("#activity-panel").hidden = !["overview", "activity", "assistant"].includes(
+    tab,
+  );
+  $("#table-filter").hidden = !["products", "orders"].includes(tab);
+  $("#table-market").value = market;
+  document.querySelector(".data-tabs").hidden = independent;
+  $("#module-workspace").hidden = !independent;
+  if (independent) window.borderModules?.open(tab);
+  if (["products", "orders"].includes(tab)) {
+    dataTab = tab;
+    renderTable();
+  }
+}
+function navigate(tab) {
+  const hash = "#" + tab;
+  if (location.hash !== hash) window.history.pushState(null, "", hash);
+  showTab(tab);
+  window.scrollTo(0, 0);
+}
+document
+  .querySelectorAll("[data-tab]")
+  .forEach((button) =>
+    button.addEventListener("click", () => navigate(button.dataset.tab)),
+  );
+document.querySelectorAll("#module-launcher a[href^='#']").forEach((link) => {
+  link.addEventListener("click", (event) => {
+    if (
+      event.button !== 0 ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    event.preventDefault();
+    navigate(link.hash.slice(1));
+  });
+});
+function routeFromHash() {
+  const requested = location.hash.slice(1);
+  const valid = Array.from(document.querySelectorAll("[data-tab]")).some(
+    (button) => button.dataset.tab === requested,
+  );
+  showTab(valid ? requested : "overview");
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", routeFromHash);
+document.addEventListener("DOMContentLoaded", routeFromHash);
 $("#new-session").addEventListener("click", () => {
   sessionId = crypto.randomUUID();
   sessionStorage.setItem("border-session", sessionId);
@@ -644,7 +677,7 @@ $("#logout-form").addEventListener("submit", () => {
         create("span", "demo-tag", "在线演示"),
         document.createTextNode("休眠或重启后数据重置 · 仅演示数据"),
       );
-      $(".utility-edition").textContent = "FREE DEMO — TEMPORARY DATA";
+      $(".utility-edition").textContent = "在线演示 · 模块版 2";
     }
     const user = await (await api("/api/auth/me")).json();
     $("#logout-form").hidden = !user.login_required;
