@@ -19,6 +19,19 @@
 | GET        | `/agents/{role}/.well-known/agent-card.json` | supplier / logistics 的能力卡                          |
 | POST       | `/agents/{role}/`                            | A2A 0.3 JSON-RPC，支持官方 SDK 的任务处理              |
 
+## 独立模块
+
+以下接口使用 POST JSON，均需传入与 AI 对话相同格式的 `session_id`。直接调用相应业务助手，跳过自然语言规划。
+
+| 路径                     | 业务参数（除 session_id）                                                                      |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| `/api/modules/product`   | `sku`、`action`（inventory/restock）；补货时指定整数 `quantity` 或 `target_stock`              |
+| `/api/modules/order`     | `order_id`、`action`（quote/shipment）                                                         |
+| `/api/modules/support`   | `topic`（policy/shipping/customs/reviews/general）、可选 `sku` 和 `question`，评论必须指定商品 |
+| `/api/modules/marketing` | `sku`、`country`（US/DE/GB/JP）、可选 `notes`                                                  |
+
+返回 JSON 包含 `module`、`facts`、`proposals`、`warnings`、`model_usage` 和 `request_id`。补货或配送仍使用原确认接口；查询不会生成确认单。商品或订单不存在时返回 404，参数无效时返回 422，同会话正在执行时返回 409。独立结果保存为作业记录，不覆盖聊天上下文。
+
 ## 发起任务
 
 ```json

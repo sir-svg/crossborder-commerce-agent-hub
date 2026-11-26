@@ -26,6 +26,7 @@ from app.external import A2AGateway, create_external
 from app.knowledge import Knowledge
 from app.llm import Model
 from app.memory import Memory
+from app.modules import router as modules_router
 from app.store import Store
 from app.tools import ToolGateway, create_tools
 from app.workflow import Workflow
@@ -95,6 +96,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.memory = memory
         app.state.workflow = Workflow(store, tools, external, memory, Model(settings))
         app.state.active_sessions = set()
+        app.state.module_timeout = settings.workflow_timeout_seconds
         # 通过代理入口公开同一实例的 Card 和 JSON-RPC，避免启动多个任务仓库。
         app.state.embedded = embedded
         try:
@@ -107,6 +109,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="跨境电商混合智能中台", version="0.1.0", lifespan=lifespan)
     app.state.auth = auth
     app.add_middleware(DemoAccess, auth=auth)
+    app.include_router(modules_router)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     def login_page(username: str, error: str = "", status: int = 200):

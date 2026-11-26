@@ -11,7 +11,8 @@ sessionStorage.setItem("border-session", sessionId);
 let data = { products: [], orders: [] },
   dataTab = "products",
   market = "all",
-  busy = false;
+  busy = false,
+  activeTab = "overview";
 const marketNames = { US: "美国", DE: "德国", GB: "英国", JP: "日本" };
 const productPaths = {
   "SKU-1001": "M5 13v-2a7 7 0 0 1 14 0v2M5 12H3v7h4v-7H5m14 0h2v7h-4v-7h2",
@@ -72,6 +73,7 @@ async function refresh() {
       .length.toString()
       .padStart(2, "0");
     renderTable();
+    window.borderModules?.refresh(data);
   } catch (error) {
     showStatus(error.message, true);
   }
@@ -82,6 +84,8 @@ function renderTable() {
   const headers = products
     ? ["商品", "售价", "库存", "市场"]
     : ["订单", "目的地", "金额", "状态"];
+  const direct = ["products", "orders"].includes(activeTab);
+  if (direct) headers.push("操作");
   const head = create("tr");
   headers.forEach((h) => head.append(create("th", "", h)));
   $("#table-head").replaceChildren(head);
@@ -121,6 +125,16 @@ function renderTable() {
       );
       tr.append(status);
     }
+    if (direct) {
+      const cell = create("td");
+      const button = create("button", "text-button direct-row", "办理 ↗");
+      button.type = "button";
+      button.addEventListener("click", () =>
+        window.borderModules?.select(products ? row.sku : row.order_id),
+      );
+      cell.append(button);
+      tr.append(cell);
+    }
     $("#table-body").append(tr);
   });
   if (!rows.length) {
@@ -142,8 +156,8 @@ function showStatus(text, error = false) {
   $("#task-status").textContent = text;
   $("#task-status").classList.toggle("error", error);
 }
-function renderProposals(proposals) {
-  $("#proposals").replaceChildren();
+function renderProposalCards(proposals, target, statusFn) {
+  target.replaceChildren();
   proposals.forEach((proposal) => {
     const card = create("div", "proposal");
     const state = proposal.status === "approved" ? "已完成" : "待确认";
@@ -166,10 +180,20 @@ function renderProposals(proposals) {
     );
     if (proposal.status === "approved") {
       card.append(create("span", "", proposal.result.message));
+      if (proposal.result.tracking)
+        card.append(create("p", "", "模拟运单 " + proposal.result.tracking));
+      if (proposal.result.stock != null)
+        card.append(
+          create("p", "", "确认后库存 " + proposal.result.stock + " 件"),
+        );
     } else {
       const button = create("button", "", "确认执行演示操作");
       button.disabled = busy;
       button.addEventListener("click", async () => {
+        if (busy) return;
+        busy = true;
+        $("#submit").disabled = $("#new-session").disabled = true;
+        window.borderModules?.syncBusy();
         button.disabled = true;
         try {
           const result = await (
@@ -180,22 +204,30 @@ function renderProposals(proposals) {
             })
           ).json();
           Object.assign(proposal, result);
-          renderProposals(proposals);
-          showStatus(result.result.message + "，页面数据已更新。");
+          statusFn(result.result.message + "，页面数据已更新。");
           await refresh();
         } catch (error) {
-          showStatus(error.message, true);
-          button.disabled = false;
+          statusFn(error.message, true);
+        } finally {
+          busy = false;
+          $("#submit").disabled = $("#new-session").disabled = false;
+          window.borderModules?.syncBusy();
+          await loadProposals().catch((error) => statusFn(error.message, true));
         }
       });
       card.append(button);
     }
-    $("#proposals").append(card);
+    target.append(card);
   });
 }
+function renderProposals(proposals) {
+  renderProposalCards(proposals, $("#proposals"), showStatus);
+  window.borderModules?.proposals(proposals);
+}
 async function loadProposals() {
+  const currentSession = sessionId;
   const proposals = await (await api(`/api/proposals/${sessionId}`)).json();
-  renderProposals(proposals);
+  if (currentSession === sessionId) renderProposals(proposals);
 }
 function renderAnswer(answer) {
   const target = $("#answer");
@@ -289,7 +321,9 @@ function historyItem(turn) {
   return item;
 }
 async function loadHistory() {
+  const currentSession = sessionId;
   const turns = await (await api(`/api/history/${sessionId}`)).json();
+  if (currentSession !== sessionId) return;
   $("#history").replaceChildren();
   turns.forEach((turn) => $("#history").prepend(historyItem(turn)));
   $("#activity-empty").hidden = turns.length > 0;
@@ -376,6 +410,7 @@ $("#task-form").addEventListener("submit", async (event) => {
   const message = $("#message").value.trim();
   if (!message || busy) return;
   busy = true;
+  window.borderModules?.syncBusy();
   $("#submit").disabled = true;
   $("#new-session").disabled = true;
   $("#timeline").replaceChildren();
@@ -424,6 +459,7 @@ $("#task-form").addEventListener("submit", async (event) => {
     showStatus(error.message, true);
   } finally {
     busy = false;
+    window.borderModules?.syncBusy();
     $("#submit").disabled = false;
     $("#new-session").disabled = false;
     await Promise.all([
@@ -457,6 +493,7 @@ document.querySelectorAll(".scenario").forEach((button) =>
 document.querySelectorAll("[data-market]").forEach((button) =>
   button.addEventListener("click", () => {
     market = button.dataset.market;
+    $("#table-market").value = market;
     document.querySelectorAll("[data-market]").forEach((b) => {
       b.classList.toggle("selected", b === button);
       b.setAttribute("aria-pressed", String(b === button));
@@ -480,9 +517,19 @@ document.querySelectorAll("[data-data]").forEach((button) =>
     renderTable();
   }),
 );
+$("#table-market").addEventListener("change", (event) => {
+  const button = document.querySelector(
+    `[data-market="${event.target.value}"]`,
+  );
+  if (button) button.click();
+});
 document.querySelectorAll("[data-tab]").forEach((button) =>
   button.addEventListener("click", () => {
     const tab = button.dataset.tab;
+    activeTab = tab;
+    const independent = ["products", "orders", "support", "marketing"].includes(
+      tab,
+    );
     document
       .querySelectorAll("[data-tab]")
       .forEach((b) => b.classList.toggle("active", b === button));
@@ -506,6 +553,24 @@ document.querySelectorAll("[data-tab]").forEach((button) =>
         "出发。",
         "跟进跨境订单，查询演示运费，并确认配送任务。",
       ],
+      support: [
+        "贴近客户，",
+        "听见",
+        "需求。",
+        "查询政策、回顾评论并准备客服回复。",
+      ],
+      marketing: [
+        "跨越市场，",
+        "说好",
+        "产品。",
+        "根据商品资料生成多语言推广草稿。",
+      ],
+      assistant: [
+        "一个指令，",
+        "连接",
+        "全程。",
+        "让多个助手协作处理跨境电商任务。",
+      ],
       activity: [
         "每一步，",
         "都有",
@@ -520,9 +585,31 @@ document.querySelectorAll("[data-tab]").forEach((button) =>
       create("span", "", titles[tab][2]),
     );
     $("#page-description").textContent = titles[tab][3];
-    $("#scenario-section").hidden = tab !== "overview";
-    $(".data-panel").hidden = tab === "activity";
-    $("#activity-panel").hidden = !["overview", "activity"].includes(tab);
+    $(".hero").hidden = independent;
+    $(".metrics").hidden = independent;
+    $(".assistant-panel").hidden = independent || tab === "activity";
+    $(".main-grid").hidden = ["support", "marketing"].includes(tab);
+    $(".main-grid").classList.toggle(
+      "single-column",
+      independent || tab === "activity",
+    );
+    $("#scenario-section").hidden = !["overview", "assistant"].includes(tab);
+    $(".data-panel").hidden = ![
+      "overview",
+      "products",
+      "orders",
+      "assistant",
+    ].includes(tab);
+    $("#activity-panel").hidden = ![
+      "overview",
+      "activity",
+      "assistant",
+    ].includes(tab);
+    $("#table-filter").hidden = !["products", "orders"].includes(tab);
+    $("#table-market").value = market;
+    document.querySelector(".data-tabs").hidden = independent;
+    $("#module-workspace").hidden = !independent;
+    if (independent) window.borderModules?.open(tab);
     if (["products", "orders"].includes(tab)) {
       dataTab = tab;
       renderTable();
@@ -538,6 +625,7 @@ $("#new-session").addEventListener("click", () => {
   $("#answer-wrap").hidden = true;
   $("#activity-empty").hidden = false;
   $("#message").value = "";
+  window.borderModules?.reset();
   showStatus("新会话已创建，商品和市场记忆已重置。");
 });
 $("#refresh").addEventListener("click", refresh);

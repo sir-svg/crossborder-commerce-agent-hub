@@ -180,20 +180,20 @@ class Workflow:
         products = await self.tools.call("search_products", {"query": product["sku"]})
         result = {"product": products[0]}
         proposals = list(state["proposals"])
+        qty = e["quantity"]
+        if e.get("target_stock") is not None:
+            qty = max(0, e["target_stock"] - product["stock"])
         try:
             supplier = await self.external.delegate(
                 "supplier",
                 {
                     "sku": product["sku"],
-                    "quantity": e["quantity"],
-                    "operation": "restock" if e["restock"] else "inventory",
+                    "quantity": qty,
+                    "operation": "restock" if e["restock"] and qty else "inventory",
                 },
             )
             result["supplier"] = supplier
             if e["restock"]:
-                qty = e["quantity"]
-                if e.get("target_stock") is not None:
-                    qty = max(0, e["target_stock"] - product["stock"])
                 if e.get("clarification"):
                     result["notice"] = e["clarification"]
                 elif qty is None:
@@ -284,6 +284,21 @@ class Workflow:
                 "sku": state["entities"].get("sku", ""),
             },
         )
+        # 独立客服中心按用户明确选择的资料类别展示结果。
+        topic = state["entities"].get("support_topic")
+        sources = {
+            "policy": "policy-return",
+            "shipping": "policy-shipping",
+            "customs": "policy-customs",
+        }
+        if topic in sources:
+            docs = [doc for doc in docs if doc.get("source") == sources[topic]]
+        elif topic == "reviews":
+            docs = [doc for doc in docs if doc.get("kind") == "review"]
+            if not docs:
+                return self.finished(
+                    state, "support", {"sources": [], "message": "当前商品暂无演示评论。"}
+                )
         return self.finished(
             state, "support", {"sources": docs, "message": "以下为演示政策与评论，退款需人工审核。"}
         )
@@ -322,6 +337,7 @@ class Workflow:
             "marketing",
             {
                 "market": country,
+                "product": p,
                 "drafts": copy,
                 "sources": docs,
                 "message": "营销草稿，发布前请审核；未自动投放。",
